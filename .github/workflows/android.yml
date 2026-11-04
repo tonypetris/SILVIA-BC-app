@@ -101,5 +101,6 @@ jobs:
           if gh release view "$T" >/dev/null 2>&1; then
             gh release upload "$T" *.apk --clobber
           else
-            gh release create "$T" *.apk --target "$GITHUB_SHA" --title "S.I.L.V.I.A. + B + C $V" --prerelease --notes "$N"
+            PRE=""; case "$V" in *-*) PRE="--prerelease";; esac
+            gh release create "$T" *.apk --target "$GITHUB_SHA" --title "S.I.L.V.I.A. + B + C $V" $PRE --notes "$N"
           fi
