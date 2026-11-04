@@ -549,7 +549,7 @@ else{const el=$(a=='rnN'?'#inN':'#inL');if(el){el.focus();el.select()}}}
 addEventListener('click',closeCtx);addEventListener('keydown',e=>{if(e.key=='Escape')closeCtx()});addEventListener('scroll',closeCtx,true);
 function layout(){const pos={},c={n:0};const go=(d,dep)=>{const ks=kids(d);let x;if(!ks.length)x=(c.n++)+.5;else{const xs=ks.map(k=>go(k,dep+1));x=(xs[0]+xs[xs.length-1])/2}pos[d.id]={x,dep};return x};
 S.devs.filter(d=>d.parent==null).forEach(h=>go(h,0));return{pos,leaves:Math.max(c.n,1),maxd:Math.max(0,...Object.values(pos).map(q=>q.dep))}}
-function drawSld(){const L=layout(),SW=190,LH=170,wd=Math.max(L.leaves*SW+120,330),sh=(wd-120-L.leaves*SW)/2+10,ht=L.maxd*LH+150,yB=dep=>82+dep*LH,box=$('#sld'),av=Math.max(240,(box.clientWidth||900)-6),sc=box.closest('.sldc'),pop=sc&&(sc.classList.contains('popd')||!!sc.closest('.wsp.side')),mh=sc?(pop?sc.clientHeight:parseFloat(getComputedStyle(sc).maxHeight)):NaN,avH=mh-(sc?sc.offsetHeight-box.offsetHeight:0)-8,fw=Math.min(1.35,av/wd),fz=Math.max(.5,avH>40?(pop?Math.min(fw,avH/ht):Math.min(fw,Math.max(.8,avH/ht))):fw),z=S.zm||fz;S.zf=fz;
+function drawSld(){const L=layout(),SW=212,LH=170,wd=Math.max(L.leaves*SW+120,330),sh=(wd-120-L.leaves*SW)/2+10,ht=L.maxd*LH+150,yB=dep=>82+dep*LH,box=$('#sld'),av=Math.max(240,(box.clientWidth||900)-6),sc=box.closest('.sldc'),pop=sc&&(sc.classList.contains('popd')||!!sc.closest('.wsp.side')),mh=sc?(pop?sc.clientHeight:parseFloat(getComputedStyle(sc).maxHeight)):NaN,avH=mh-(sc?sc.offsetHeight-box.offsetHeight:0)-8,fw=Math.min(1.35,av/wd),fz=Math.max(.5,avH>40?(pop?Math.min(fw,avH/ht):Math.min(fw,Math.max(.8,avH/ht))):fw),z=S.zm||fz;S.zf=fz;
 let s=`<svg class="sdl" viewBox="0 0 ${wd} ${ht}" style="width:${Math.round(wd*z)}px;max-width:none;height:${Math.round(ht*z)}px">`;
 for(let k=0;k<=L.maxd;k++)s+=`<text x="6" y="${yB(k)+20}" style="fill:var(--mut);font-weight:700">${k?T('lvl')+' '+k:T('lv0')}</text>`;
 S.devs.forEach((d,i)=>{const q=L.pos[d.id];if(!q)return;const cx=sh+q.x*SW,y=yB(q.dep),c=COL[i%COL.length],P=par(d),ks=kids(d),sy=P?yB(q.dep-1)+72:14,nm=d.name||nameOf(d);
@@ -679,9 +679,9 @@ function drawFp(){const d=cur(),i=S.sel;if(!d)return;const p=d.p;
 const fixed=prm(d).every(q=>q.o.length<2);
 $('#fp').innerHTML=`<div class="dimg">${devImg(d)}</div>${fixed?`<p class="msg" style="text-align:center">${T('fixd')}</p>`:'<div id="fpw"></div>'}
 <div class="lab"><label>${T('nm')}<input id="inN" value="${esc(d.name||nameOf(d))}"></label><label>${T('ln')}<input id="inL" value="${esc(lineOf(d,i))}"></label>
-<label>${T('ver')}<select id="inV"><option value="">${T('verNo')}</option>${verOpts(d.kind,d.frame,d.trip).map(v=>`<option value="${v.code}" ${d.ver==v.code?'selected':''}>${esc(v.l)}</option>`).join('')}</select></label>
+${fpInSel(d)}<label>${T('ver')}<select id="inV"><option value="">${T('verNo')}</option>${fpVerOpts(d).map(v=>`<option value="${v.code}" ${d.ver==v.code?'selected':''}>${esc(v.l)}</option>`).join('')}</select></label>
 <button id="bDel">${T('del')}</button></div>`;
-$('#inN').oninput=e=>{d.name=e.target.value;drawSld();drawDash()};$('#inL').oninput=e=>{d.line=e.target.value;drawSld()};$('#inV').onchange=e=>{d.ver=e.target.value||null;drawSld();drawDash();drawBk();drawKpi()};
+$('#inN').oninput=e=>{d.name=e.target.value;drawSld();drawDash()};$('#inL').oninput=e=>{d.line=e.target.value;drawSld()};$('#inV').onchange=e=>{d.ver=e.target.value||null;drawSld();drawDash();drawBk();drawKpi()};{const ii=$('#inI');if(ii)ii.onchange=e=>{fpSetIn(d,+e.target.value);draw(1)}};
 $('#bDel').onclick=()=>ctxAct('del',i);upLcd()}
 // ---------- ottimizzazione
 function optimize(){let good=0,bad='';const ps=S.devs.filter(d=>kids(d).length).sort((a,b)=>depth(b)-depth(a));
@@ -1323,6 +1323,15 @@ function cabCoord(){let n=0,up=0,dn=0,nw=0,bar=0;const bad=[];
    else{const mm=hbSafe(d,'31');if(mm){d.cab={type:'BAR',ip:'31',hb:mm.hb,bIcw:mm.icw,L:c.L};cabFix(d.cab);hbApply(d.cab);d.cab.bIcw=mm.icw;d.cab.bIpk=Math.round(pkN(mm.icw)*mm.icw*10)/10;bar++}else{bad.push(nm);if(before=='null')d.cab=null}}}
   if(JSON.stringify(d.cab||null)!=before)n++});
  S.msg=T('coDone').replace('{n}',n).replace('{u}',up).replace('{d}',dn).replace('{w}',nw).replace('{b}',bar)+(bad.length?' · '+T('coBad')+' '+bad.join(', '):'');draw(1)}
+
+// ===== faceplate panel: change In and breaking capacity without restarting the wizard =====
+function fpInSel(d){const L=(FR[d.kind]&&FR[d.kind][d.frame]||[]).filter(n=>avail(d.kind,d.frame,n).includes(d.trip));
+ return `<label>${T('In')}<select id="inI">${L.map(n=>`<option value="${n}" ${d.In==n?'selected':''}>${n} A</option>`).join('')}</select></label>`}
+function fpVerOpts(d){const L=verOptsW({kind:d.kind,frame:d.frame,In:d.In,trip:d.trip,poles:d.poles});if(d.ver&&!L.some(v=>v.code==d.ver)){const x=verOpts(d.kind,d.frame,d.trip).find(v=>v.code==d.ver);if(x)L.unshift(x)}return L}
+function fpSetIn(d,In){const old={...d.p},lo=(verOpts(d.kind,d.frame,d.trip).find(v=>v.code==d.ver)||{}).lo;d.In=In;d.p={};
+ prm(d).forEach(q=>{const ov=old[q.k];d.p[q.k]=ov!=null&&q.o.includes(ov)?ov:snap(q.o,q.df)});
+ const L=verOptsW({kind:d.kind,frame:d.frame,In:d.In,trip:d.trip,poles:d.poles});if(d.ver&&!L.some(v=>v.code==d.ver)){const s_=L.find(v=>v.lo==lo)||L.find(v=>v.lo>=lo)||L[0];d.ver=s_?s_.code:null}
+ if(d.cab&&d.cab.type!='BAR')cabFix(d.cab);rcdOf(d)}
 
 loadData();boot();showIntro();window._glhOff=1;
 let _rz;addEventListener('resize',()=>{clearTimeout(_rz);_rz=setTimeout(()=>{if($('#sld')&&S.devs.length){if(!S.zm)drawSld();if($('#chart'))drawChart()}},120)});
