@@ -90,9 +90,16 @@ jobs:
           name: SILVIA-BC-apk
           path: '*.apk'
 
-      - name: Publish on Releases (tags v*)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Publish on Releases (version from package.json)
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" *.apk --title "S.I.L.V.I.A. + B + C ${GITHUB_REF_NAME#v}" --prerelease --notes "App Android di S.I.L.V.I.A. + B + C. Scarica il file .apk sul telefono e aprilo per installarlo (consenti l'installazione da questa origine)."
+          V=$(node -p "require('./package.json').version")
+          T="v$V"
+          N="App Android di S.I.L.V.I.A. + B + C $V. Dal telefono scarica il file .apk e aprilo per installarlo (consenti l'installazione da questa origine). Salva progetto, PDF e XLS si aprono con il menu Condividi di Android."
+          if gh release view "$T" >/dev/null 2>&1; then
+            gh release upload "$T" *.apk --clobber
+          else
+            gh release create "$T" *.apk --target "$GITHUB_SHA" --title "S.I.L.V.I.A. + B + C $V" --prerelease --notes "$N"
+          fi
