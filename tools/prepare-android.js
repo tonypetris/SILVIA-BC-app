@@ -6,7 +6,8 @@ const v = pkg.version;                                   // e.g. 1.1.0-rc.3
 const m = v.match(/^(\d+)\.(\d+)\.(\d+)(?:-rc\.(\d+))?$/);
 if (!m) throw new Error('unexpected version ' + v);
 // 1.1.0-rc.3 -> 1010003 ; 1.1.0 (stable) -> 1010099
-const code = (+m[1]) * 1000000 + (+m[2]) * 10000 + (+m[3]) * 100 + (m[4] ? +m[4] : 99);
+// explicit androidVersionCode wins (must always increase: 1.0.0 stable comes after the 1.1.0 release candidates)
+const code = pkg.androidVersionCode || ((+m[1]) * 1000000 + (+m[2]) * 10000 + (+m[3]) * 100 + (m[4] ? +m[4] : 99));
 const g = R('android/app/build.gradle');
 let s = fs.readFileSync(g, 'utf8');
 s = s.replace(/versionCode \d+/, 'versionCode ' + code).replace(/versionName "[^"]*"/, 'versionName "' + v + '"');

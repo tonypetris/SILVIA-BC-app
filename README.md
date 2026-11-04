@@ -13,7 +13,7 @@ Apri progetto usa il selettore file di Android.
 
 ## Come si aggiorna
 - `src/SILVIA-BC.html` è il programma desktop (cartella `1_Programma_Program` del pacchetto): sostituiscilo con la nuova versione.
-- Aggiorna `"version"` in `package.json` (es. `1.1.0-rc.4`, poi `1.1.0`).
+- Aggiorna `"version"` in `package.json` (es. `1.0.1`) e aumenta `"androidVersionCode"` (deve crescere sempre, altrimenti Android non installa l'aggiornamento).
 - Ogni push su `main` compila l'APK e lo pubblica su **Releases** nella versione indicata in `package.json` (es. `v1.1.0-rc.4`).
 
 ## Firma dell'app
