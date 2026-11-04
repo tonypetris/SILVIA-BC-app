@@ -1,0 +1,13 @@
+{
+  "appId": "io.github.tonypetris.silviabc",
+  "appName": "SILVIA B+C",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 0 }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "silvia-bc-app",
+  "version": "1.1.0-rc.3",
+  "private": true,
+  "description": "S.I.L.V.I.A. + B + C – app Android (Capacitor)",
+  "scripts": {
+    "build:www": "node tools/build-www.js",
+    "android:prepare": "node tools/prepare-android.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "6.1.2",
+    "@capacitor/core": "6.1.2",
+    "@capacitor/filesystem": "6.0.1",
+    "@capacitor/share": "6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "6.1.2",
+    "jspdf": "2.5.1",
+    "xlsx": "0.18.5"
+  }
+}
