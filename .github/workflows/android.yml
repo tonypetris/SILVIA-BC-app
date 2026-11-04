@@ -73,6 +73,18 @@ jobs:
           fi
           ls -la ../*.apk
 
+      - name: Check APK
+        run: |
+          A=$(ls *.apk | head -1)
+          AAPT=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt
+          "$AAPT" dump badging "$A" | grep -E "^package:|application-label:|sdkVersion|targetSdkVersion"
+          unzip -l "$A" | grep -E "assets/public/(index.html|libs/)"
+          unzip -p "$A" assets/public/index.html | grep -q "libs/jspdf.umd.min.js"
+          unzip -p "$A" assets/public/index.html | grep -q "libs/xlsx.full.min.js"
+          unzip -p "$A" assets/public/index.html | grep -q "registerPlugin('Share')"
+          unzip -p "$A" assets/capacitor.plugins.json
+          echo "APK OK"
+
       - uses: actions/upload-artifact@v4
         with:
           name: SILVIA-BC-apk
