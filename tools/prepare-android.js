@@ -27,3 +27,16 @@ if (!s.includes('signingConfigs')) {
 }
 fs.writeFileSync(g, s);
 console.log('android: versionName', v, 'versionCode', code);
+
+// rotation: the activity must survive orientation changes (no WebView reload) and follow the device/user choice
+const mf = R('android/app/src/main/AndroidManifest.xml');
+let x = fs.readFileSync(mf, 'utf8');
+x = x.replace(/android:configChanges="([^"]*)"/, (a, v) => {
+  const need = ['orientation', 'screenSize', 'smallestScreenSize', 'screenLayout'];
+  const have = v.split('|'); need.forEach(n => { if (!have.includes(n)) have.push(n); });
+  return 'android:configChanges="' + have.join('|') + '"';
+});
+x = x.replace(/\s*android:screenOrientation="[^"]*"/g, '');
+x = x.replace(/<activity\b/, '<activity android:screenOrientation="fullUser" android:resizeableActivity="true"');
+fs.writeFileSync(mf, x);
+console.log('android: rotation enabled (fullUser, configChanges kept)');
