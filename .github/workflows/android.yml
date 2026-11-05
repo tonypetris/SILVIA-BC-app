@@ -100,6 +100,7 @@ jobs:
           N="App Android di S.I.L.V.I.A. + B + C $V. Dal telefono scarica il file .apk e aprilo per installarlo (consenti l'installazione da questa origine). Salva progetto, PDF e XLS si aprono con il menu Condividi di Android."
           if gh release view "$T" >/dev/null 2>&1; then
             gh release upload "$T" *.apk --clobber
+            case "$V" in *-*) ;; *) gh release edit "$T" --prerelease=false --latest ;; esac
           else
             PRE=""; case "$V" in *-*) PRE="--prerelease";; esac
             gh release create "$T" *.apk --target "$GITHUB_SHA" --title "S.I.L.V.I.A. + B + C $V" $PRE --notes "$N"
