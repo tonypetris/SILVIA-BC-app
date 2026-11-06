@@ -13,8 +13,8 @@ Apri progetto usa il selettore file di Android.
 
 ## Come si aggiorna
 - `src/SILVIA-BC.html` è il programma desktop (cartella `1_Programma_Program` del pacchetto): sostituiscilo con la nuova versione.
-- Aggiorna `"version"` in `package.json` (es. `1.0.1`) e aumenta `"androidVersionCode"` (deve crescere sempre, altrimenti Android non installa l'aggiornamento).
-- Ogni push su `main` compila l'APK e lo pubblica su **Releases** nella versione indicata in `package.json` (es. `v1.1.0-rc.4`).
+- Numerazione delle release: `<versione>-W<settimana>` (es. `1-W45` = versione 1, settimana 45). In `package.json` aggiorna `"release"` (es. `1-W46`), `"version"` tecnico (es. `1.46.0`) e `"androidVersionCode"` (es. `1460000`: deve crescere sempre, altrimenti Android non installa l'aggiornamento).
+- Ogni push su `main` compila l'APK e lo pubblica su **Releases** con il nome della release (es. `v1-W45`).
 
 ## Firma dell'app
 Senza firma di release GitHub produce un APK *debug*: si installa, ma ogni nuova versione richiede di disinstallare la precedente.

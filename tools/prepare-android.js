@@ -10,7 +10,8 @@ if (!m) throw new Error('unexpected version ' + v);
 const code = pkg.androidVersionCode || ((+m[1]) * 1000000 + (+m[2]) * 10000 + (+m[3]) * 100 + (m[4] ? +m[4] : 99));
 const g = R('android/app/build.gradle');
 let s = fs.readFileSync(g, 'utf8');
-s = s.replace(/versionCode \d+/, 'versionCode ' + code).replace(/versionName "[^"]*"/, 'versionName "' + v + '"');
+const vn = pkg.release || v;                             // release name shown on the phone, e.g. 1-W45
+s = s.replace(/versionCode \d+/, 'versionCode ' + code).replace(/versionName "[^"]*"/, 'versionName "' + vn + '"');
 if (!s.includes('signingConfigs')) {
   s = s.replace(/buildTypes \{/, `signingConfigs {
         release {
@@ -26,7 +27,7 @@ if (!s.includes('signingConfigs')) {
   s = s.replace(/release \{\n(\s*)minifyEnabled false/, 'release {\n$1if (System.getenv("ANDROID_KEYSTORE_FILE")) signingConfig signingConfigs.release\n$1minifyEnabled false');
 }
 fs.writeFileSync(g, s);
-console.log('android: versionName', v, 'versionCode', code);
+console.log('android: versionName', vn, 'versionCode', code);
 
 // rotation: the activity must survive orientation changes (no WebView reload) and follow the device/user choice
 const mf = R('android/app/src/main/AndroidManifest.xml');

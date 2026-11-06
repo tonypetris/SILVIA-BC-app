@@ -452,10 +452,10 @@ function wiz(){const w=S.wiz,a=$('#app');let h='<div class="card wiz"><div class
 if(w.step==1){h+=`${acrV()}<h2>${T('s1')}</h2><p class="sub">${T('sub')}</p><div class="hero">${['ACB','MCCB','MCB','RCBO'].map(k=>`<figure><img src="${IMGSRC(k)}" alt="${k}"><figcaption>${k}</figcaption></figure>`).join('')}</div><div class="opts"><button class="opt ${w.role=='head'?'on':''}" data-r="head" ${S.devs.length?'disabled':''}>${T('head')}</button><button class="opt ${w.role=='down'?'on':''}" data-r="down" ${S.devs.length?'':'disabled'}>${T('down')}</button></div><p class="msg">${S.devs.length?'':T('headF')}</p>`}
 if(w.step==2)h+=`<h2>${T('s2')}</h2><div class="opts">${wKinds().map(k=>`<button class="opt pic2 ${w.kind==k?'on':''}" data-k="${k}">${k=='SW'?swPics():`<img src="${kImg(k)}" alt="">`}${k=='RCD'?T('kRcd'):k=='SW'?T('kSW'):k}</button>`).join('')}</div>`;
 if(w.step==3){const f=FR[w.kind];if(!w.frame&&Object.keys(f).length==1)w.frame=Object.keys(f)[0];h+=`<h2>${T('s3')} · ${w.kind=='SW'?T('kSW'):w.kind}</h2><b>${T('frame')}</b>${w.kind=='SW'?swFrameRows(w):`<div class="opts">${Object.keys(f).map(x=>`<button class="chip ${w.frame==x?'on':''}" data-f="${x}">${x}</button>`).join('')}</div>`}`;
-if(w.frame)h+=`<b>${T('In')}</b><div class="opts">${f[w.frame].map(x=>`<button class="chip ${w.In==x?'on':''}" data-i="${x}">${x}</button>`).join('')}</div>`;
+if(w.frame)h+=`<b>${T('In')}</b><div class="opts">${catIns(w.kind,w.frame,f[w.frame]).map(x=>`<button class="chip ${w.In==x?'on':''}" data-i="${x}">${x}</button>`).join('')}</div>`;
 if(w.In&&w.kind=='SW')w.trip='SW';if(w.In&&w.kind!='SW')h+=`<b>${w.kind=='RCD'?T('rTypL'):T('trip')}</b><div class="opts">${avail(w.kind,w.frame,w.In).map(x=>`<button class="chip ${w.trip==x?'on':''}" data-t="${x}">${x}</button>`).join('')}</div>`}
 if(w.step==3&&w.trip){const vs=verOptsW(w);h+=polesRow(w)+wCodeRow(w);if(!vs.length)h+='<b>'+T('ver')+'</b><p class="msg">'+T('verNone')+'</p>';if(vs.length)h+=`<b>${T('ver')}</b><div class="vgrp">${verGroups(vs).map(([k,a])=>`<div class="vrow"><span class="vk">${k}</span><div class="opts">${a.map(v=>`<button class="chip ${w.ver==v.code?'on':''}" data-v="${v.code}" title="${esc(v.l)}">${verChip(v)}</button>`).join('')}</div></div>`).join('')}</div>`}
-h+=`<div class="opts nav2">${w.step>1&&!(S.devs.length&&w.step==2)?`<button id="wb">${T('back')}</button>`:''}${S.devs.length&&w.step==1?'':''}<button class="pri" id="wn" ${(w.step==1&&!w.role)||(w.step==2&&!w.kind)||(w.step==3&&(!w.trip||(verOptsW(w).length&&!w.ver)))?'disabled':''}>${w.step==3?T('ok'):T('next')+' ›'}</button>${S.devs.length?`<button id="wc">✕</button>`:''}</div>${w.step==1?dataPanel():''}</div>`;
+h+=`<div class="opts nav2">${w.step>1&&!(S.devs.length&&w.step==2)?`<button id="wb">${T('back')}</button>`:''}${S.devs.length&&w.step==1?'':''}<button class="pri" id="wn" ${(w.step==1&&!w.role)||(w.step==2&&!w.kind)||(w.step==3&&(!w.trip||(verOptsW(w).length&&!w.ver)||(!w.poles&&polesOf(w.kind,w.frame,w.trip).length>1)))?'disabled':''}>${w.step==3?T('ok'):T('next')+' ›'}</button>${S.devs.length?`<button id="wc">✕</button>`:''}</div>${w.step==1?dataPanel():''}</div>`;
 a.innerHTML=h;if(w.step==1)bindData();
 a.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{w.role=b.dataset.r;render()});
 a.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{w.kind=b.dataset.k;w.frame=(w.kind=='MCB'||w.kind=='RCBO')?w.kind:null;w.In=w.trip=null;render()});
@@ -472,7 +472,7 @@ function work(){$('#app').innerHTML=`<div class="wsp"><div class="card sldc"><sp
 <div class="card fpc"><div id="fp"></div></div>
 <div class="card full"><h2>${T('sel')}</h2><div class="wrapx" id="dash"></div><div id="vis"></div><p class="msg" id="msg"></p></div><div class="card full"><h2>${T('bkT')}</h2><div class="vchips" id="vsel"></div><div id="iccbar"></div><div class="wrapx" id="bk"></div><div class="pairw" id="bkPair"></div><div class="pph" data-ph="pair" hidden><span>${T('popPhP')}</span><button data-popb="pair">↙ ${T('popC')}</button></div><p class="msg">${T('bkNote')}</p></div><div class="card full" id="cCard"><h2>${T('cT')}</h2><div id="cBody"></div></div></div></div>`;
 if(window.ResizeObserver){const ro=new ResizeObserver(()=>fitChart());ro.observe($('#fp'));ro.observe($('#kpi'))}
-$('#bOpt').textContent=T('opt');$('#bOpt').onclick=optimize;
+$('#bOpt').textContent=T('opt');$('#bOpt').onclick=optimizeSel;$('#bOpt').title=T('optOne');
 const go=d=>{if(d){S.sel=idx(d.id);draw(1)}},sib=n=>{const d=cur(),p=par(d),L=p?kids(p):[d];go(L[L.indexOf(d)+n])};
 $('#nU').onclick=()=>go(par(cur()));$('#nD').onclick=()=>go(kids(cur())[0]);$('#nL').onclick=()=>sib(-1);$('#nR').onclick=()=>sib(1);
 $('#nS').onclick=()=>{const d=cur();if(d.parent==null)return;S.wiz={step:2,role:'down',parent:d.parent};S.open=true;render()};
@@ -532,7 +532,7 @@ const lg=$('#leg');lg.innerHTML=S.devs.map((x,i)=>`<button class="lg ${i==S.sel?
 lg.querySelectorAll('.lg').forEach(b=>b.onclick=()=>{S.sel=+b.dataset.i;draw(1)})}
 function closeCtx(){const m=$('#ctx');if(m)m.remove()}
 function ctxMenu(e,i){e.preventDefault();S.sel=i;draw(1);closeCtx();const d=S.devs[i],p=par(d),L=p?kids(p):[d],k=L.indexOf(d),m=document.createElement('div');m.id='ctx';S._ctxT=Date.now();m.setAttribute('role','menu');
-const A=[['add','＋  '+T('cmAdd'),1],['sib','＋  '+T('cmSib'),!!p],['rep','⇄  '+T('cmRep'),1],['del','✕  '+T('cmDel'),1],['-','',1],['edit',T('edit'),1],['rnN',T('rnN'),1],['rnL',T('rnL'),1],['dup',T('dup'),!!p],['-','',1],['mode','⇄  '+T(S.iccMode=='board'?'iccOne':'iccBoard'),1],['bdNew','▣  '+T('bdNew'),!!p&&!d.bd],['bdEdit','▣  '+T('bdEdit'),S.iccMode=='board'||!!bdHead(d).bd],['bdDel','✕  '+T('bdDel'),!!bdHead(d).bd&&bdHead(d).parent!=null],['-','',1],['cardTgl',(S._ctxCard&&S._ctxCard.classList.contains('collapsed')?'▸  '+T('cardExp'):'▾  '+T('cardCol')),!!S._ctxCard],['cardAll','▾▸  '+T('cardAllExp'),!!document.querySelector('.card.collapsed')],['-','',1],['cut','✂  '+T('cmCut'),!!p],['copy','⧉  '+T('cmCopy'),1],['pasteD','⤓  '+T('cmPasteD'),clipOk(d,'D')],['pasteS','⤓  '+T('cmPasteS'),clipOk(d,'S')],['-','',1],['up',T('mup'),k>0],['dn',T('mdn'),k<L.length-1]].filter(x=>x[2]);
+const A=[['add','＋  '+T('cmAdd'),1],['sib','＋  '+T('cmSib'),!!p],['rep','⇄  '+T('cmRep'),1],['del','✕  '+T('cmDel'),1],['-','',1],['edit',T('edit'),1],['rnN',T('rnN'),1],['rnL',T('rnL'),1],['dup',T('dup'),!!p],['-','',1],['optOne','⚙  '+T('optOne'),!!kidsOC(d).length||!!pOC(d)],['optAll','⚙  '+T('optAll'),1],['-','',1],['mode','⇄  '+T(S.iccMode=='board'?'iccOne':'iccBoard'),1],['bdNew','▣  '+T('bdNew'),!!p&&!d.bd],['bdEdit','▣  '+T('bdEdit'),S.iccMode=='board'||!!bdHead(d).bd],['bdDel','✕  '+T('bdDel'),!!bdHead(d).bd&&bdHead(d).parent!=null],['-','',1],['cardTgl',(S._ctxCard&&S._ctxCard.classList.contains('collapsed')?'▸  '+T('cardExp'):'▾  '+T('cardCol')),!!S._ctxCard],['cardAll','▾▸  '+T('cardAllExp'),!!document.querySelector('.card.collapsed')],['-','',1],['cut','✂  '+T('cmCut'),!!p],['copy','⧉  '+T('cmCopy'),1],['pasteD','⤓  '+T('cmPasteD'),clipOk(d,'D')],['pasteS','⤓  '+T('cmPasteS'),clipOk(d,'S')],['-','',1],['up',T('mup'),k>0],['dn',T('mdn'),k<L.length-1]].filter(x=>x[2]);
 m.innerHTML=A.map(([q,l])=>q=='-'?'<hr>':`<button role="menuitem" data-a="${q}"${q=='del'?' class="dng"':''}>${esc(l)}</button>`).join('');
 const dc=(e.target&&e.target.ownerDocument)||document,wv=dc.defaultView||window;dc.body.appendChild(m);const r=m.getBoundingClientRect();m.style.left=Math.max(4,Math.min(e.clientX,wv.innerWidth-r.width-8))+'px';m.style.top=Math.max(4,Math.min(e.clientY,wv.innerHeight-r.height-8))+'px';
 m.querySelectorAll('button').forEach(b=>b.onclick=ev=>{ev.stopPropagation();closeCtx();ctxAct(b.dataset.a,i)})}
@@ -685,7 +685,7 @@ $('#inN').oninput=e=>{d.name=e.target.value;drawSld();drawDash()};$('#inL').onin
 $('#bDel').onclick=()=>ctxAct('del',i);upLcd()}
 // ---------- ottimizzazione
 function optimize(){let good=0,bad='';const ps=S.devs.filter(d=>d.kind!='RCD'&&kidsOC(d).length).sort((a,b)=>depth(b)-depth(a));
-ps.forEach(u=>{const ws=kidsOC(u),ks=prm(u).filter(q=>['Tr','Isd','Tsd','Li'].includes(q.k));let best=null,bs=1e9;const orig={...u.p};
+ps.forEach(u=>{const ws=kidsOC(u),ks=prm(u).filter(q=>OPTK.includes(q.k));let best=null,bs=1e9;const orig={...u.p};
 (function rec(j,sc){if(j==ks.length){if(sc<bs&&ws.every(w=>okPair(u,w))){bs=sc;best={...u.p}}return}const q=ks[j];q.o.filter(v=>v>0).forEach((v,x)=>{u.p[q.k]=v;rec(j+1,sc+x)})})(0,0);
 if(best){u.p=best;good++}else{u.p=orig;ks.forEach(q=>u.p[q.k]=q.o[q.o.length-1]);bad+=' '+(u.name||nameOf(u))}});
 S.msg=bad?`${T('of')}${bad}`:`${T('od')}: ${good}`;if(!S.open)draw(1)}
@@ -714,8 +714,9 @@ if(!await ask(T('dgUpT'),T('dgUpB').replace('{f}',nF.length).replace('{s}',nS.le
 resetData();S.dfo={};if(nB){setBDB(nB.db);try{localStorage.setItem(LSKB,JSON.stringify(nB.db))}catch(e){S.noSt=true}}nF.forEach(([k,f,v])=>{FR[k][f]=v});nA.forEach(([f,t,v])=>{(AV[f]=AV[f]||{})[t]=v});nS.forEach(([b,pm,v,df])=>{(S.ovr[b]=S.ovr[b]||{})[pm]=v;if(df!=null)S.dfo[b+'.'+pm]=df});
 S.cust={ts:new Date().toISOString(),file:f.name,nf:nF.length,ns:nS.length+nA.length+(nB?nB.n:0)};S.noSt=!saveData();fitDevs();render()}catch(err){alert(err.message)}};r.readAsArrayBuffer(f);e.target.value=''};
 // ---------- crediti, changelog, protezioni
-const APP={v:'1.0.0'};
+const APP={v:'1-W45'};
 const CHL0=[
+{v:'1-W45',d:'2026-11-06',it:['Nuova numerazione: 1-W45 = versione 1, settimana di rilascio 45', 'Ottimizza curve: lavora sull\'interruttore selezionato rispetto a quelli a monte e a valle; Ir, Ir1 e Ir2 restano quelle impostate, Tr può essere ottimizzata; se non c\'è soluzione un fumetto indica la coppia e cosa fare; dal menu contestuale Ottimizza tutte le curve', 'Cavi a valle di un sezionatore dimensionati sulla In del sezionatore (cortocircuito verificato con l\'interruttore a monte)', 'Solo interruttori a catalogo Hager: correnti, curve, poli e versioni proposti solo se esiste il codice; poli obbligatori; codici anche per i dispositivi salvati senza poli; nascosti i sezionatori h1000/h1600', 'Norma di riferimento come criterio iniziale (EN 60898 civile, Icn, o EN 60947-2 industriale, Icu): si propongono solo i modulari certificati per quella norma; la norma si cambia anche nella configurazione e nel pannello del dispositivo; le versioni mostrano un solo valore: quello della norma scelta per la corrente nominale dell\'interruttore', 'Mirino attivabile/disattivabile, spento all\'avvio; pulsanti Comprimi/Espandi più chiari; schema filare e dispositivo si comprimono di lato; Ottimizza curve e Coordina cavi e Coordina differenziali ciascuno nella barra della propria sezione; sezionatori aperti chiamati hw+ HW1, HW2, HW4; nuovi sezionatori scatolati h3+ PW1600 (HMQ…AR, 630–1600 A, Icw 19,2 kA); Icc modificabile dal riquadro in alto', 'Cavi secondo la CEI 64-8: carico Ib in ampere sulle linee finali con potenza in kW (monofase 230 V o trifase 400 V, cos φ modificabile); sulle linee che alimentano altri interruttori Ib = Kc × somma delle Ib a valle (sempre calcolata, campo grigio), Ib oltre In/Ir segnalata come sovraccarico, Kc della EN 61439 modificabile per quadro; verifica Ib ≤ In ≤ Iz e caduta di tensione dall\'origine (ΔU max modificabile, 4 % di default); Coordina cavi sceglie anche la sezione per la caduta di tensione', 'Schema multifilare: nuovo pulsante Salva DXF, disegno vettoriale in mm con fogli A3 affiancati e layer CORNICE, CONDUTTORI, SIMBOLI, TESTI (si apre in AutoCAD e negli altri CAD e si salva in DWG)', 'Quattro sezioni, ciascuna con Espandi/Comprimi: Selettività, Filiazione, Dimensionamento cavi, Coordinamento differenziali', 'Il file di progetto salva anche la lingua e lo stato delle finestre (riquadri compressi o espansi, dimensioni, zoom, mirino, quadro selezionato): alla riapertura il programma si presenta come al salvataggio', 'Correzioni: barra o condotto a valle di un sezionatore verificati sulla In del sezionatore, come i cavi; scegliendo un quadro, In, Icc e pannello passano a un interruttore di quel quadro; barre ripetute nello schema in finestra separata; finestra d\'avvio fuori schermo sui telefoni (Pixel 7)', '5 novembre: quadri, schema multifilare, sezionatori, menu contestuale ovunque, mirino con limite di selettività e magnete, colonna Selettivo fino a, codici HMX, schema su telefono 1080 × 2400'],en:['New numbering: 1-W45 = version 1, release week 45', 'Optimize curves: works on the selected breaker against the upstream and downstream ones; Ir, Ir1 and Ir2 stay as set, Tr can be optimized; if there is no solution a bubble names the pair and what to do; Optimize all curves from the context menu', 'Cables downstream of a switch-disconnector sized on the switch rating (short circuit checked with the upstream breaker)', 'Hager catalogue breakers only: ratings, curves, poles and versions offered only when the code exists; poles required; codes also for devices saved without poles; h1000/h1600 switches hidden', 'Reference standard as the initial criterion (EN 60898 residential, Icn, or EN 60947-2 industrial, Icu): only the MCBs certified to that standard are offered; the standard can also be changed in the configuration step and in the device panel; versions show a single value: the one of the chosen standard for the breaker rating', 'Crosshair on/off, off at start-up; clearer Collapse/Expand buttons; diagram and device panel collapse sideways; Optimize curves and Coordinate cables and Coordinate RCDs each in the bar of its own section; open-type switch-disconnectors named hw+ HW1, HW2, HW4; new h3+ PW1600 moulded-case switch-disconnectors (HMQ…AR, 630–1600 A, Icw 19.2 kA); Isc editable from the top box', 'Cables to CEI 64-8 / IEC 60364: load Ib in amperes on the final lines with power in kW (single-phase 230 V or three-phase 400 V, editable cos φ); on lines feeding other breakers Ib = Kc × sum of the downstream Ib (always calculated, grey field), Ib above In/Ir flagged as overload, EN 61439 Kc editable per switchboard; Ib ≤ In ≤ Iz and voltage drop from the origin checked (ΔU max editable, 4 % default); Coordinate cables also sizes for voltage drop', 'Multi-wire diagram: new Save DXF button, vector drawing in mm with A3 sheets side by side and layers CORNICE (frame), CONDUTTORI (conductors), SIMBOLI (symbols), TESTI (text) (opens in AutoCAD and other CAD programs, can be saved as DWG)', 'Four sections, each with Expand/Collapse: Selectivity, Back-up, Cable sizing, RCD coordination', 'The project file also stores the language and the window layout (collapsed or expanded cards, sizes, zoom, crosshair, selected switchboard): reopening it restores the program as it was saved', 'Fixes: busbar or busway downstream of a switch-disconnector checked against the switch rating, like cables; choosing a switchboard moves In, Isc and the panel to a breaker of that board; repeated bars in the separate diagram window; start-up window off screen on phones (Pixel 7)', '5 November: switchboards, multi-wire diagram, switch-disconnectors, context menu everywhere, crosshair with selectivity limit and magnet, Selective up to column, HMX codes, diagram on 1080 × 2400 phones']},
 {v:'1.0.0',d:'2026-11-04',it:['Prima versione stabile di S.I.L.V.I.A. + B + C: selettività, filiazione (back-up) e coordinamento di cavi, barre e differenziali in un unico programma','Catalogo Hager 2024: serie MCB e RCBO per caratteristiche, differenziali integrati, blocchi (modulari e per scatolati) e differenziali puri con tenuta al cortocircuito','Codici Hager per tutti i dispositivi (MCB, RCBO, h3+, PW1600, primi caratteri hw+) e per i differenziali','Tasti Coordina differenziali e Coordina cavi; Icw degli ACB hw+; simboli IEC nello schema filare; report C con sezioni Cavi e Differenziali'],en:['First stable version of S.I.L.V.I.A. + B + C: selectivity, back-up and coordination of cables, busbars and RCDs in a single program','Hager catalogue 2024: MCB and RCBO series by characteristics, integrated RCDs, add-on blocks (modular and for MCCBs) and RCCBs with short-circuit withstand','Hager codes for all devices (MCB, RCBO, h3+, PW1600, first characters of hw+) and RCDs','Coordinate RCDs and Coordinate cables buttons; hw+ ACB Icw; IEC symbols on the single-line diagram; C report with separate Cables and RCDs sections']},
 {v:'1.1.0-rc.3',d:'2026-11-04',tag:'RC',it:['Hager Alubars: corretto il sistema più grande, In massima 3900 A IP31 / 3200 A IP55 (prima 3190 / 2800 A); i progetti con il vecchio codice si aprono sul nuovo sistema'],en:['Hager Alubars: largest system corrected, maximum In 3900 A IP31 / 3200 A IP55 (was 3190 / 2800 A); projects with the old code open on the new system']},
 {v:'1.1.0-rc.2',d:'2026-11-04',tag:'RC',it:['Interruttori solo magnetici (MAG): la linea risulta Da verificare perché non sono protetti dal sovraccarico','Icc negativa non più accettata; Icc inferiore alla soglia di intervento segnalata come Da verificare','9 impianti di esempio nella cartella 6_Esempi_Examples'],en:['Magnetic-only breakers (MAG): the line is To be checked because they do not protect against overload','Negative Isc no longer accepted; Isc below the trip threshold flagged as To be checked','9 example installations in the 6_Esempi_Examples folder']},
@@ -1196,7 +1197,7 @@ function verOptsW(w){const all=verOpts(w.kind,w.frame,w.trip);if(!w.poles)return
  for(const e of [...BU,...BD])if(famOk(e,w.kind,w.frame,w.trip)&&String(e.poles||'').split('/').map(x=>x.trim()).includes(w.poles))codes.add(e.code);
  return all.filter(v=>codes.has(v.code)||(v.code=='ADF8'&&w.poles=='1P+N'))}
 function polesRow(w){const ps=polesOf(w.kind,w.frame,w.trip);if(w.poles&&!ps.includes(w.poles))w.poles=null;if(ps.length<2){if(ps.length==1)w.poles=ps[0];return ps.length==1?`<b>${T('poles')}</b><div class="opts"><button class="chip on" data-p="${ps[0]}">${ps[0]}</button></div>`:''}
- return `<b>${T('poles')}</b><div class="opts">${['',...ps].map(p=>`<button class="chip ${(w.poles||'')==p?'on':''}" data-p="${p}">${p||T('polesAll')}</button>`).join('')}</div>`}
+ return `<b>${T('poles')}</b><div class="opts">${ps.map(p=>`<button class="chip ${(w.poles||'')==p?'on':''}" data-p="${p}">${p||T('polesAll')}</button>`).join('')}</div>`}
 // single-line diagram: show the downstream line (cable or busbar) under each breaker
 function cabShort(d){const c=d.cab;if(!c)return '';if(c.type=='BAR')return (c.hb?hbLab(HBI[c.hb]):T('bName'))+' · In '+c.bIn+' A';return c.type+' '+(c.n>1?c.n+'×':'')+String(c.S).replace('.',S.lang=='it'?',':'.')+' mm² · '+c.L+' m'}
 {const _ds=drawSld;drawSld=function(){_ds();const box=$('#sld'),svg=box&&box.querySelector('svg');if(!svg)return;const NS='http://www.w3.org/2000/svg';
@@ -1412,7 +1413,7 @@ function cabAll(c0){const rf=cabRefOf(c0);S._cabRef=rf;let k=0;S.devs.forEach(d=
 
 // one prospective Isc for the whole program: the same field in Back-up, Cables and RCDs
 drawIccBar=function(){const one=S.iccMode=='one';
- document.querySelectorAll('#iccbar,.iccHost').forEach(ib=>{const h=ib.id||ib.dataset.h,main=!!ib.id;
+ qAll('#iccbar,.iccHost').forEach(ib=>{const h=ib.id||ib.dataset.h,main=!!ib.id;
   ib.innerHTML=`<div class="iccbar"><b>⚡ ${T('iccP')}</b>${one?`<input class="iccAllI" data-h="${h}" type="text" inputmode="decimal" autocomplete="off" data-num="1" min="0" step="0.5" value="${S.iccAll||''}"><span>kA</span>`:''}<span class="iccm"><button data-m="one" class="${one?'on':''}">${T('iccOne')}</button><button data-m="board" class="${one?'':'on'}">${T('iccBoard')}</button></span></div><p class="msg">${T(one?(main?'iccOneH':'iccOneC'):(main?'iccBoardH':'iccBoardC'))}</p>`;
   const a=ib.querySelector('.iccAllI');if(a)a.oninput=()=>{S.iccAll=Math.max(0,parseFloat(a.value)||0);S._fiIcc='.iccAllI[data-h="'+h+'"]';draw(1)};
   ib.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(m==S.iccMode)return;if(m=='board'){S.iccB={};S.devs.forEach(d=>S.iccB[bKey(d)]=S.iccAll)}S.iccMode=m;draw(1)})})};
@@ -1644,10 +1645,10 @@ function bdGroupDiv(box,M){if(!box)return;const rows=[...box.querySelectorAll(':
  rows.forEach(r=>{if(!r.classList.contains('bdr'))r.style.display='none'});box.appendChild(frag);bdBind(box)}
 function boardsUI(){const on=S.iccMode=='board',M=on?mfBoards():null;document.body.classList.toggle('bdon',on);
  if(!on)S.bdF=null;else if(S.bdF&&!M.byKey[S.bdF])S.bdF=null;
- document.querySelectorAll('#bk tr[data-i], #cBody tr[data-i]').forEach(tr=>{const d=S.devs[+tr.dataset.i];const old=tr.querySelector('.bdt');if(old)old.remove();
+ document.querySelectorAll('#bk tr[data-i], #cBody tr[data-i], #rBody tr[data-i]').forEach(tr=>{const d=S.devs[+tr.dataset.i];const old=tr.querySelector('.bdt');if(old)old.remove();
   if(!on||!d)return;const b=boardOf(d,M);if(!b)return;const td=tr.querySelector('td');if(td)td.insertAdjacentHTML('afterbegin',boardTag(b))});
- document.querySelectorAll('#iccbar,.iccHost').forEach(h=>{h.querySelectorAll(':scope > .bdleg,:scope > .bdhint').forEach(x=>x.remove())});
- if(on){bdGroup(document.querySelector('#bk table'),M);document.querySelectorAll('#cBody table.ctab').forEach(t=>bdGroup(t,M))}
+ qAll('#iccbar,.iccHost').forEach(h=>{h.querySelectorAll(':scope > .bdleg,:scope > .bdhint').forEach(x=>x.remove())});
+ if(on){bdGroup(document.querySelector('#bk table'),M);document.querySelectorAll('#cBody table.ctab, #rBody table.ctab').forEach(t=>bdGroup(t,M))}
  bdSld(M)}
 function bdSld(M){const on=S.iccMode=='board';if(on&&!M)M=mfBoards();const box=$('#sld');if(!box)return;
  const svg=box.querySelector('svg');if(!svg)return;svg.querySelectorAll('.bdbg').forEach(x=>x.remove());svg.querySelectorAll('.dv').forEach(g=>g.style.opacity='');svg.classList.remove('bdflt');
@@ -1720,15 +1721,15 @@ tr.bdhide{display:none}.bdsbar{padding:0 2px}.bdsbar .bdleg{margin:2px 0 6px}`;d
  const head=mem.find(d=>bdHead(d)===d)||mem[0],hp=head.parent,sel=S.sel,map=mem.map(d=>all.indexOf(d)),z=S.zm;
  S.devs=mem;head.parent=null;S.sel=mem.indexOf(all[sel]);
  try{_ds5()}finally{S.devs=all;head.parent=hp;S.sel=sel}
- document.querySelectorAll('#sld .dv').forEach(g=>{g.dataset.i=map[+g.dataset.i]});bdSld()}}
+ qAll('#sld .dv').forEach(g=>{g.dataset.i=map[+g.dataset.i]});bdSld()}}
 // context menu also on the rows of the back-up, cable and RCD tables (right click / long press) and on the board headers
 function rowCtxIdx(t){if(!t||!t.closest)return null;if(t.closest('input,select,textarea'))return null;
  const vr=t.closest('#vis .vr');if(vr){const x=vr.querySelector('[data-sel]');if(x)return +x.dataset.sel}
  const ds=t.closest('#dash [data-sel]');if(ds)return +ds.dataset.sel;const dr=t.closest('#dash tr');if(dr){const x=dr.querySelectorAll('[data-sel]');if(x.length)return +x[x.length-1].dataset.sel}
  const lg=t.closest('#leg .lg[data-i]');if(lg)return +lg.dataset.i;
  if(!t.closest('#fpw')&&t.closest('#cs, #chart, #kpi, #fp, #bkPair, .pbox'))return S.devs[S.sel]?S.sel:null;
- const tr=t.closest('#bk tr[data-i], #cBody tr[data-i]');if(tr)return +tr.dataset.i;
- const h=t.closest('#bk tr.bdh, #cBody tr.bdh');if(h){const b=h.querySelector('[data-bf]');const M=mfBoards(),bo=b&&M.byKey[b.dataset.bf];if(bo)return S.devs.indexOf(bo.head)}return null}
+ const tr=t.closest('#bk tr[data-i], #cBody tr[data-i], #rBody tr[data-i]');if(tr)return +tr.dataset.i;
+ const h=t.closest('#bk tr.bdh, #cBody tr.bdh, #rBody tr.bdh');if(h){const b=h.querySelector('[data-bf]');const M=mfBoards(),bo=b&&M.byKey[b.dataset.bf];if(bo)return S.devs.indexOf(bo.head)}return null}
 document.addEventListener('contextmenu',e=>{const i=rowCtxIdx(e.target);if(i==null||i<0)return;e.stopPropagation();ctxMenu(e,i)},true);
 {let lp=null;document.addEventListener('pointerdown',e=>{if(e.pointerType=='mouse')return;const i=rowCtxIdx(e.target);if(i==null||i<0)return;const x=e.clientX,y=e.clientY;
   lp={t:setTimeout(()=>{lp=null;ctxMenu({preventDefault(){},clientX:x,clientY:y,target:e.target},i)},550),x,y}},true);
@@ -1740,7 +1741,7 @@ Object.assign(D.en,{iccBoardH:'One value per switchboard. To create a board: rig
 // =====================================================================================================
 // SWITCH-DISCONNECTORS (interruttori di manovra-sezionatori, IEC 60947-3): no trip unit, no curve.
 // Shown in the diagrams; transparent for selectivity, back-up and cables (the upstream breaker protects them).
-// Data: Hager catalogues (modular SBN/SBB, h3 x160/x250/x630, h3+ P160/P250/P630, h1000/h1600, hw+ HW1W/HW2W/HW4W)
+// Data: Hager catalogues (modular SBN/SBB, h3 x160/x250/x630, h3+ P160/P250/P630/PW1600, h1000/h1600, hw+ HW1/HW2/HW4)
 // =====================================================================================================
 const SWF={
  SBN:{l:'SBN',In:[16,25,32,40,63,80,100,125],P:['1P','2P','3P','4P'],icw:null,code:(In,p)=>'SBN'+p[0]+({100:'90',125:'99'}[In]||String(In))},
@@ -1751,11 +1752,12 @@ const SWF={
  P160:{l:'h3+ P160',In:[125,160],P:['3P','4P'],icw:2,code:(In,p)=>'HCS'+(In==125?(p=='3P'?'125':'126'):(p=='3P'?'160':'161'))+'AC'},
  P250:{l:'h3+ P250',In:[200,250],P:['3P','4P'],icw:3.6,code:(In,p)=>'HCT'+(In==200?(p=='3P'?'200':'201'):(p=='3P'?'250':'251'))+'AR'},
  P630:{l:'h3+ P630',In:[400,630],P:['3P','4P'],icw:{'3P':5,'4P':7.6},code:(In,p)=>'HCW'+(In==400?(p=='3P'?'400':'401'):(p=='3P'?'630':'631'))+'AR'},
+ PW1600:{l:'h3+ PW1600',In:[630,800,1000,1250,1600],P:['3P','4P'],icw:19.2,code:(In,p)=>'HMQ'+({630:'63',800:'80',1000:'97',1250:'98',1600:'99'}[In])+(p=='3P'?'0':'1')+'AR'}, // PW1600 technical catalogue 6LE009402A: HMQ…AR, AC-23A, Icw 19,2 kA 1 s
  h1000:{l:'h1000',In:[800,1000],P:['3P','4P'],icw:10,t:.3,code:(In,p)=>'HCE'+(In==800?(p=='3P'?'800':'801'):(p=='3P'?'970':'971'))+'H'},
  h1600:{l:'h1600',In:[1250,1600],P:['3P','4P'],icw:20,t:.3,code:(In,p)=>'HCF'+(In==1250?(p=='3P'?'980':'981'):(p=='3P'?'990':'991'))+'H'},
- HW1:{l:'hw+ HW1W',In:[400,630,800,1000,1250,1600],P:['3P','4P'],icw:55,code:(In,p)=>'HW1W'+p[0]+String(Math.round(In/100)).padStart(2,'0')+'…'},
- HW2:{l:'hw+ HW2W',In:[630,800,1000,1250,1600,2000,2500],P:['3P','4P'],icw:66,code:(In,p)=>'HW2W'+p[0]+String(Math.round(In/100)).padStart(2,'0')+'…'},
- HW4:{l:'hw+ HW4W',In:[1000,1250,1600,2000,2500,3200,4000],P:['3P','4P'],icw:85,code:(In,p)=>'HW4W'+p[0]+String(Math.round(In/100)).padStart(2,'0')+'…'}};
+ HW1:{l:'hw+ HW1',In:[400,630,800,1000,1250,1600],P:['3P','4P'],icw:55,code:(In,p)=>'HW1W'+p[0]+String(Math.round(In/100)).padStart(2,'0')+'…'},
+ HW2:{l:'hw+ HW2',In:[630,800,1000,1250,1600,2000,2500],P:['3P','4P'],icw:66,code:(In,p)=>'HW2W'+p[0]+String(Math.round(In/100)).padStart(2,'0')+'…'},
+ HW4:{l:'hw+ HW4',In:[1000,1250,1600,2000,2500,3200,4000],P:['3P','4P'],icw:85,code:(In,p)=>'HW4W'+p[0]+String(Math.round(In/100)).padStart(2,'0')+'…'}};
 FR.SW={};Object.entries(SWF).forEach(([k,v])=>FR.SW[k]=v.In.slice());TR.SW=['SW'];P['SW.SW']=[];
 const swIcw=d=>{const f=SWF[d.frame];if(!f||f.icw==null)return null;return typeof f.icw=='object'?f.icw[d.poles||'4P']:f.icw};
 const NOC=d=>!!d&&(d.kind=='RCD'||d.kind=='SW');
@@ -1795,15 +1797,15 @@ const bdIn=d=>!S.bdF||S.iccMode!='board'||bKey(d)===S.bdF;
 {const _dc2=drawChart;drawChart=function(){const h0=S.hide,h={...h0};let ch=false;S.devs.forEach(d=>{if(!bdIn(d)&&!h[d.id]){h[d.id]=true;ch=true}});if(!ch)return _dc2();S.hide=h;try{return _dc2()}finally{S.hide=h0}}}
 {const _av2=autoView;autoView=function(){const h0=S.hide,h={...h0};S.devs.forEach(d=>{if(!bdIn(d))h[d.id]=true});S.hide=h;try{return _av2()}finally{S.hide=h0}}}
 function bdLists(){const on=S.iccMode=='board',show=d=>!!d&&!NOC(d)&&bdIn(d);
- document.querySelectorAll('#leg .lg').forEach(b=>{const d=S.devs[+b.dataset.i];b.style.display=show(d)?'':'none'});
- document.querySelectorAll('.bdlbar').forEach(x=>x.remove());
+ qAll('#leg .lg').forEach(b=>{const d=S.devs[+b.dataset.i];b.style.display=show(d)?'':'none'});
+ qAll('.bdlbar').forEach(x=>x.remove());
  if(on){const M=mfBoards(),bar=()=>{const d=document.createElement('div');d.className='bdlbar';d.innerHTML=bdBar(M);bdBind(d);return d};
-  bdGroupDiv(document.querySelector('#vis .vis'),M);
-  bdGroup(document.querySelector('#dash table'),M,tr=>{const x=tr.querySelectorAll('[data-sel]');return x.length>1?S.devs[+x[x.length-1].dataset.sel]:null})}
- else{document.querySelectorAll('#vis .vr').forEach(r=>{const b=r.querySelector('[data-sel]');const d=b&&S.devs[+b.dataset.sel];r.style.display=show(d)?'':'none'})}
- const ft=S.bdF&&on?mfBoards().byKey[S.bdF]:null;document.querySelectorAll('.bdflt-note').forEach(x=>x.remove());
+  bdGroupDiv($('#vis .vis'),M);
+  bdGroup($('#dash table'),M,tr=>{const x=tr.querySelectorAll('[data-sel]');return x.length>1?S.devs[+x[x.length-1].dataset.sel]:null})}
+ else{qAll('#vis .vr').forEach(r=>{const b=r.querySelector('[data-sel]');const d=b&&S.devs[+b.dataset.sel];r.style.display=show(d)?'':'none'})}
+ const ft=S.bdF&&on?mfBoards().byKey[S.bdF]:null;qAll('.bdflt-note').forEach(x=>x.remove());
  if(ft)['#vis','#dash'].forEach(q=>{const el=$(q);if(el)el.insertAdjacentHTML('afterbegin',`<p class="bdflt-note" style="--bc:${ft.col}">${boardTag(ft)} ${esc(T('bdFlt').replace('{n}',ft.name))} <button class="bdc" data-bf="">${T('bdAll')}</button></p>`)});
- document.querySelectorAll('.bdflt-note').forEach(n=>bdBind(n))}
+ qAll('.bdflt-note').forEach(n=>bdBind(n))}
 {const _dr3=draw;draw=function(full){_dr3(full);try{bdLists()}catch(e){console.error(e)}}}
 Object.assign(D.it,{bdFlt:'Solo il quadro {n}'});Object.assign(D.en,{bdFlt:'Only switchboard {n}'});
 {const st=document.createElement('style');st.textContent=`.bdflt-note{display:flex;align-items:center;gap:8px;margin:2px 0 8px;padding:6px 10px;border-radius:8px;background:color-mix(in srgb,var(--bc) 10%,transparent);border-left:4px solid var(--bc);font-size:13px;font-weight:700}.bdflt-note .bdc{margin-left:auto}`;document.head.appendChild(st)}
@@ -1820,7 +1822,7 @@ Object.assign(D.en,{fixdSw:'Switch-disconnector: no trip unit and no curve. It i
 // switch-disconnectors in the wizard: the three protection families with their images, one row each
 // (h3 x160 / x250 / x630 hidden for now; kept in the data so that saved projects still open)
 ['x160','x250','x630'].forEach(k=>delete FR.SW[k]);
-const SWROWS=[['MCB',['SBN','SBB']],['MCCB',['P160','P250','P630','h1000','h1600']],['ACB',['HW1','HW2','HW4']]];
+const SWROWS=[['MCB',['SBN','SBB']],['MCCB',['P160','P250','P630','PW1600','h1000','h1600']],['ACB',['HW1','HW2','HW4']]];
 const swFam=f=>(SWROWS.find(r=>r[1].includes(f))||['MCCB'])[0];
 function swPics(){return `<span class="swpics">${['MCB','MCCB','ACB'].map(k=>`<img src="${kImg(k)}" alt="${k}">`).join('')}</span>`}
 function swFrameRows(w){return `<div class="swrows">${SWROWS.map(([k,L])=>{const ok=L.filter(f=>FR.SW[f]);return ok.length?`<div class="swrow"><span class="swimg"><img src="${kImg(k)}" alt="${k}"><small>${k}</small></span><div class="opts">${ok.map(x=>`<button class="chip ${w.frame==x?'on':''}" data-f="${x}">${esc(SWF[x].l)}</button>`).join('')}</div></div>`:''}).join('')}</div>`}
@@ -1848,20 +1850,22 @@ function setIccMode(m){if(m==S.iccMode)return;if(m=='board'){S.iccB={};S.devs.fo
 function modeTgl(){const sp=document.createElement('span');sp.className='iccm mdt';sp.innerHTML=`<button data-m="one" class="${S.iccMode=='one'?'on':''}">${T('iccOne')}</button><button data-m="board" class="${S.iccMode=='board'?'on':''}">${T('iccBoard')}</button>`;
  sp.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();setIccMode(b.dataset.m)});return sp}
 // one bar on the top of: simplified diagram, curves, curve visibility, selectivity dashboard (mode + system or boards)
-function dashBars(){document.querySelectorAll('.mdbar').forEach(x=>x.remove());document.querySelectorAll('.earthS.blk,.bdlbar,.bdsbar').forEach(x=>x.remove());
+function allDocs(){const o=[document];try{Object.values(PW).forEach(w=>{if(w&&!w.closed&&w.document)o.push(w.document)})}catch(e){}return o}
+function qAll(sel){return allDocs().flatMap(d=>[...d.querySelectorAll(sel)])}
+function dashBars(){qAll('.mdbar').forEach(x=>x.remove());qAll('.earthS.blk,.bdlbar,.bdsbar').forEach(x=>x.remove());
  const on=S.iccMode=='board',M=on?mfBoards():null;
  const mk=()=>{const d=document.createElement('div');d.className='mdbar';d.appendChild(modeTgl());
   if(on){const b=document.createElement('div');b.className='bdlbar';b.innerHTML=bdBar(M);bdBind(b);d.appendChild(b)}
   else{const l=document.createElement('label');l.className='earthS';l.innerHTML=`<span>${T('mfSys')}</span><select>${['TT','TNS','TNC','IT'].map(e=>`<option value="${e}" ${S.earth==e?'selected':''}>${EARTHL[e]}</option>`).join('')}</select>`;l.querySelector('select').onchange=e=>{S.earth=e.target.value;draw(1)};d.appendChild(l)}return d};
  const sb=$('#sld');if(sb&&sb.parentElement){const bar=mk();sb.parentElement.insertBefore(bar,sb);const h=bar.offsetHeight;if(S._sldBarH!==h){S._sldBarH=h;if(!S.zm)setTimeout(()=>drawSld(),0)}}
  const lg=$('#leg');if(lg&&lg.parentElement)lg.parentElement.insertBefore(mk(),lg);
- const h4=document.querySelector('#vis .vis > h4');if(h4)h4.after(mk());
+ const h4=qAll('#vis .vis > h4')[0];if(h4)h4.after(mk());
  const ds=$('#dash');if(ds)ds.insertBefore(mk(),ds.firstChild);
- document.querySelectorAll('#iccbar,.iccHost').forEach(h=>h.insertBefore(mk(),h.firstChild));
- document.querySelectorAll('.earthS').forEach(x=>{if(!x.closest('.mdbar'))x.remove()})}
+ qAll('#iccbar,.iccHost').forEach(h=>h.insertBefore(mk(),h.firstChild));
+ qAll('.earthS').forEach(x=>{if(!x.closest('.mdbar'))x.remove()})}
 {const _dr4=draw;draw=function(full){_dr4(full);try{dashBars()}catch(e){console.error(e)}}}
-{const _ds7=drawSld;drawSld=function(){_ds7();try{if(!document.querySelector('#sld')?.previousElementSibling?.classList.contains('mdbar'))dashBars()}catch(e){}}}
-{const _dc4=drawChart;drawChart=function(){_dc4();try{if(!document.querySelector('#leg')?.previousElementSibling?.classList.contains('mdbar'))dashBars()}catch(e){}}}
+{const _ds7=drawSld;drawSld=function(){_ds7();try{if(!$('#sld')?.previousElementSibling?.classList.contains('mdbar'))dashBars()}catch(e){}}}
+{const _dc4=drawChart;drawChart=function(){_dc4();try{if(!$('#leg')?.previousElementSibling?.classList.contains('mdbar'))dashBars()}catch(e){}}}
 // context menu: switch mode; "new switchboard" also from the single-Icc mode (it switches to per-board)
 {const _ca3=ctxAct;ctxAct=function(a,i){if(a=='mode'){setIccMode(S.iccMode=='board'?'one':'board');return}if(a=='bdNew'&&S.iccMode!='board'){setIccMode('board')}return _ca3(a,i)}}
 // right click on an empty area of any dashboard card: menu of the selected breaker
@@ -1870,7 +1874,7 @@ function dashBars(){document.querySelectorAll('.mdbar').forEach(x=>x.remove());d
 {const st=document.createElement('style');st.textContent=`.mdbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:2px 0 8px}.mdbar .iccm{margin-left:0}.mdbar .iccm button{font-size:12.5px;padding:5px 10px}.mdbar .mdt button.on{background:var(--brand)!important;color:#fff!important;border-color:var(--brand)!important}.mdbar .bdlbar{flex:1 1 100%}.mdbar .bdlbar .bdleg{margin:0}.mdbar .earthS{margin:0}`;document.head.appendChild(st)}
 
 // zoom of the simplified diagram in the footer under the diagram (moves with it)
-{const _ds8=drawSld;drawSld=function(){_ds8();try{const z=document.querySelector('.sldc .stop .zm'),ft=document.querySelector('.sldc > .sldft');if(z&&ft){ft.insertBefore(z,ft.querySelector('.sgrip')||ft.firstChild.nextSibling);z.classList.add('zmft')}}catch(e){}}}
+{const _ds8=drawSld;drawSld=function(){_ds8();try{const z=$('.sldc .stop .zm'),ft=$('.sldc > .sldft');if(z&&ft){ft.insertBefore(z,ft.querySelector('.sgrip')||ft.firstChild.nextSibling);z.classList.add('zmft')}}catch(e){}}}
 // one look for the controls of every dashboard
 {const st=document.createElement('style');st.textContent=`
 .iccbar .iccm{display:none}
@@ -1891,11 +1895,11 @@ pairFit=function(){const box=$('#bkPair .pbox'),sv=box&&box.querySelector('svg')
  mh=pop?box.clientHeight:parseFloat(getComputedStyle(box).maxHeight),fw=(box.clientWidth-4)/vb.width,fh=mh>40?(mh-6)/vb.height:fw;S.pzf=Math.min(fw,fh)*(pop?1:.5);const z=S.pz||S.pzf;
  Object.assign(sv.style,{width:Math.round(vb.width*z)+'px',height:Math.round(vb.height*z)+'px',minWidth:'0',maxWidth:'none',margin:'0 auto'})};
 // collapse / expand every dashboard card (button ▾ in the title and context menu)
-const CARDS=[['sld','.sldc'],['chart','.chc'],['fp','.fpc'],['dash','#dash'],['bk','#bk'],['c','#cBody'],['kpi','#kpi']];
+const CARDS=[['sld','.sldc'],['chart','.chc'],['fp','.fpc'],['dash','#dash'],['bk','#bk'],['c','#cBody'],['r','#rBody'],['kpi','#kpi']];
 function cardOf(el){return el&&el.closest?el.closest('.card'):null}
 function cardKey(c){if(!c)return null;for(const [k,q] of CARDS){const e=document.querySelector(q);if(e&&(e===c||cardOf(e)===c))return k}return null}
 // at start: diagram, curves and selected device open; dashboard, back-up and coordination collapsed
-if(!S.coll)S.coll={dash:true,bk:true,c:true};
+if(!S.coll)S.coll={dash:true,bk:true,c:true,r:true};
 function cardFold(c,on){const h=c.querySelector('h2');if(!h)return;c.querySelectorAll('.cHid').forEach(x=>x.classList.remove('cHid'));if(!on)return;let x=h;while(x&&x!==c){const p=x.parentElement;[...p.children].forEach(sb=>{if(sb!==x&&!sb.classList.contains('wgrip')&&!sb.classList.contains('cardTg'))sb.classList.add('cHid')});x=p}
  [...h.children].forEach(ch=>{if(!ch.classList.contains('cardTg'))ch.classList.add('cHid')})}
 function cardsUI(){CARDS.forEach(([k,q])=>{const e=document.querySelector(q),c=e&&(e.classList.contains('card')?e:cardOf(e));if(!c)return;if(k=='fp'&&!c.querySelector('h2')){const h=document.createElement('h2');h.className='fph';h.textContent=T('fpT');c.insertBefore(h,c.firstChild)}c.classList.toggle('collapsed',!!S.coll[k]);
@@ -2007,10 +2011,10 @@ function cxBind(){const ch=$('#chart'),svg=ch&&ch.querySelector('#cs');if(!svg)r
 // row 1: multi-wire + navigation group (↑ ↓ ‹ ›) kept together; row 2: the two "add" buttons side by side
 Object.assign(D.it,{upS:'↑ Monte',dnS:'↓ Valle',addV:'+ A valle',addL:'+ Stesso livello'});Object.assign(D.en,{upS:'↑ Up',dnS:'↓ Down',addV:'+ Downstream',addL:'+ Same level'});
 {const _ds11=drawSld;drawSld=function(){_ds11();try{sldBtns()}catch(e){}}}
-function sldBtns(){const nav=document.querySelector('.sldc .stop .nav');if(!nav)return;
+function sldBtns(){const nav=$('.sldc .stop .nav');if(!nav)return;
  if(!nav.querySelector('.navg')){const g=document.createElement('span');g.className='navg';g.setAttribute('role','group');['nU','nD','nL','nR'].forEach(id=>{const b=nav.querySelector('#'+id);if(b)g.appendChild(b)});nav.appendChild(g)}
  const u=nav.querySelector('#nU'),d=nav.querySelector('#nD');if(u){u.textContent=T('upS');u.title=T('up').replace(/^\S+\s/,'')}if(d){d.textContent=T('dn').replace(/^\S+\s/,'')&&T('dnS');d.title=T('dn').replace(/^\S+\s/,'')}
- const op=document.querySelector('.sldc .stop .opts');if(op){const a=op.querySelector('#nA'),s=op.querySelector('#nS');if(a){a.textContent=T('addV');a.title=T('add').replace(/^\+\s*/,'')}if(s){s.textContent=T('addL');s.title=T('addS')}}}
+ const op=$('.sldc .stop .opts');if(op){const a=op.querySelector('#nA'),s=op.querySelector('#nS');if(a){a.textContent=T('addV');a.title=T('add').replace(/^\+\s*/,'')}if(s){s.textContent=T('addL');s.title=T('addS')}}}
 {const st=document.createElement('style');st.textContent=`.sldc .stop .nav{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;justify-content:flex-start}
 .sldc .stop .nav>button,.sldc .stop .nav .navg button{margin:0}
 .sldc .stop .navg{display:inline-flex;flex-wrap:nowrap}
@@ -2032,7 +2036,7 @@ function selLimit(u,w){if(!u||!w)return undefined;const lo=Math.max(1,(irA(w)||w
  const N=240;for(let k=0;k<=N;k++){const I=lo*Math.pow(hi/lo,k/N);let a,b;try{a=tt(u,I);b=tt(w,I)}catch(e){return undefined}if(!isFinite(a))continue;if(!isFinite(b)||a<=b*1.0001)return I}return null}
 function cxPair(){const w=cur();if(!w||S.hide[w.id])return null;const u=cxUpOf(w);if(!u)return{w,u:null};return{w,u,is:selLimit(u,w)}}
 {const _dc2=drawChart;drawChart=function(){_dc2();try{cxMarks()}catch(e){}}}
-function cxMarks(){const svg=document.querySelector('#chart #cs');if(!svg)return;const w=cur();if(!w||S.hide[w.id])return;
+function cxMarks(){const svg=$('#chart #cs');if(!svg)return;const w=cur();if(!w||S.hide[w.id])return;
  const NS='http://www.w3.org/2000/svg',g=document.createElementNS(NS,'g');g.setAttribute('pointer-events','none');g.setAttribute('class','cxmk');
  const P=cxPair(),cap=cxCap(w),m=[];
  if(P&&P.u&&P.is)m.push({I:P.is,t:T('selUpTo')+' '+cxI(P.is),c:'#7b1fa2'});
@@ -2105,7 +2109,7 @@ capLbl=d=>isMod(d)&&S.std!='60947'?'Icn':'Icu';
 {const _lp5=loadProject;loadProject=function(o){S.std=o&&o.std=='60947'?'60947':'60898';return _lp5(o)}}
 function stdSel(){const l=document.createElement('label');l.className='stdS';l.title=T('stdT');l.innerHTML=`<span>${T('stdL')}</span><select><option value="60898" ${S.std!='60947'?'selected':''}>${T('std98')}</option><option value="60947" ${S.std=='60947'?'selected':''}>${T('std47')}</option></select>`;
  const se=l.querySelector('select');se.onclick=e=>e.stopPropagation();se.onchange=()=>{S.std=se.value;draw(1)};return l}
-{const _db=dashBars;dashBars=function(){_db();document.querySelectorAll('.mdbar').forEach(b=>{if(!b.querySelector('.stdS'))b.appendChild(stdSel())})}}
+{const _db=dashBars;dashBars=function(){_db();qAll('.mdbar').forEach(b=>{if(!b.querySelector('.stdS'))b.appendChild(stdSel())})}}
 {const st=document.createElement('style');st.textContent=`.mdbar .stdS{display:inline-flex;align-items:center;gap:6px;font-size:12.5px}.mdbar .stdS span{font-weight:700}.mdbar .stdS select{padding:5px 8px;border-radius:8px;border:1px solid var(--ln);background:var(--card);color:inherit;font:inherit}
 .cxtip .cxlim .ok{color:#12803f;font-weight:600}.cxtip .cxlim .wn{color:#b36b00;font-weight:600}`;document.head.appendChild(st)}
 
@@ -2117,6 +2121,325 @@ function sldStackH(){const box=$('#sld'),sc=box&&box.closest('.sldc');if(!sc)ret
  const h=Math.round(Math.max(260,innerHeight*.4,Math.min(innerHeight*.8,mh-ctrl)));if(box.style.height!==h+'px'){box.style.height=h+'px';box.style.flex='0 0 auto'}}
 {const _ds12=drawSld;drawSld=function(){try{sldStackH()}catch(e){}_ds12();try{const b=$('#sld'),h0=b&&b.style.height;sldStackH();if(b&&b.style.height!==h0&&!S.zm&&(S._stk||0)<2){S._stk=(S._stk||0)+1;drawSld()}else S._stk=0}catch(e){}}}
 addEventListener('resize',()=>{try{sldStackH()}catch(e){}});
+
+// ===== cable after a switch-disconnector: sized on the switch rating =====
+// ampacity / overload against the smallest In of the switches between the line and the protective breaker upstream;
+// short circuit still checked with the let-through energy of that breaker (it is the one that clears the fault)
+Object.assign(D.it,{swCabIn:'Portata verificata sulla In del sezionatore ({n} A): il carico a valle non deve superarla. Cortocircuito verificato con {u}.'});
+Object.assign(D.en,{swCabIn:'Ampacity checked against the switch rating ({n} A): the downstream load must not exceed it. Short circuit checked with {u}.'});
+function swChainIn(d){let m=Infinity,x=d;while(x&&NOC(x)){if(x.In>0)m=Math.min(m,x.In);x=par(x)}return m}
+{const _cc=cabCalc;cabCalc=function(d){const r=_cc(d);if(!r||!d||d.kind!='SW'||!d.cab||r.noProt)return r;const OV=d.cab.type=='BAR'?T('bOvlKo'):T('cOvlKo');
+ const u=pOC(d),lim=swChainIn(d);if(!u||!isFinite(lim)||lim>=r.Ir)return r;
+ const KO=[OV,T('cIbKo'),T('cScKo'),T('bIpkKo')];r.Ir=lim;r.ovl=r.Iz>0&&r.Ir<=r.Iz+1e-9;r.ibOk=!d.cab.ib||d.cab.ib<=r.Ir;
+ let why=r.why.filter(w=>w!==OV&&w!==T('cIbKo')&&!/^(Linea protetta da|Line protected by)/.test(w));
+ if(!r.ibOk)why.unshift(T('cIbKo'));if(!r.ovl)why.unshift(OV);
+ why.unshift(T('swCabIn').replace('{n}',lim).replace('{u}',u.name||nameOf(u)));
+ if(r.st!='na'){r.st=why.some(w=>KO.includes(w))?'ko':why.length>1?'chk':'ok'}r.why=why;r.swIn=lim;return r}}
+
+// ===== standard as a selection criterion (Hager HBO 2024, "Norme di riferimento" of each MCB series) =====
+// EN 60898 only: MHN MJN MXN MYN MKN MLN · both: MBA MCA NBN NCN NDN HMB HMC HMD HMF · EN 60947-2 only: NRN NSN HMX
+// RCBO are EN 61009-1 (Icn): offered with both settings, always rated in Icn.
+const STD98=/^(MHN|MJN|MXN|MYN|MKN|MLN)/,STD47=/^(NRN|NSN|HMX)/;
+function serStd(d){if(!d)return 'both';if(d.kind=='RCBO')return '61009';if(d.kind!='MCB')return '60947';const c=String(d.ver||'');return STD98.test(c)?'60898':STD47.test(c)?'60947':'both'}
+function stdOk(kind,code){if(kind!='MCB')return true;const t=serStd({kind,ver:code});return t=='both'||t==S.std}
+{const _w=verOptsW;verOptsW=function(w){const L=_w(w);return w&&w.kind=='MCB'?L.filter(v=>stdOk('MCB',v.code)):L}}
+capLbl=d=>{if(!isMod(d))return 'Icu';const t=serStd(d);return t=='61009'||t=='60898'?'Icn':t=='60947'?'Icu':(S.std=='60947'?'Icu':'Icn')};
+Object.assign(D.it,{stdW:'Norma di riferimento',stdWs:'Decide quali modulari si possono scegliere e quale potere di interruzione si confronta con la Icc.',std98d:'Icn · impianti civili e similari, uso da parte di persone non addestrate.',std47d:'Icu · impianti industriali, uso da parte di personale addestrato.',stdRc:'I differenziali magnetotermici (RCBO) sono EN 61009-1: valore Icn con entrambe le norme.',stdNo:'Serie non certificata per la norma scelta'});
+Object.assign(D.en,{stdW:'Reference standard',stdWs:'Decides which MCBs can be chosen and which breaking capacity is compared with the Isc.',std98d:'Icn · residential and similar installations, used by ordinary persons.',std47d:'Icu · industrial installations, used by skilled persons.',stdRc:'RCBOs are EN 61009-1: Icn value with either standard.',stdNo:'Series not certified to the chosen standard'});
+function stdWiz(){return `<div class="stdW"><b>${T('stdW')}</b><p class="sub">${T('stdWs')}</p><div class="opts">${[['60898','std98','std98d'],['60947','std47','std47d']].map(([v,l,ds])=>`<button class="opt stdO ${S.std==v?'on':''}" data-std="${v}"><span>${T(l)}</span><small>${T(ds)}</small></button>`).join('')}</div><p class="msg">${T('stdRc')}</p></div>`}
+{const st=document.createElement('style');st.textContent=`.stdW{margin:14px 0 4px}.stdW .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.stdO{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:3px}.stdO small{font-weight:400;opacity:.8;line-height:1.3}.wiz .stdS{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:4px 0 12px;font-size:13px}.wiz .stdS span{font-weight:600}`;document.head.appendChild(st)}
+{const _wz=wiz;wiz=function(){_wz();const w=S.wiz,a=$('#app'),c=a&&a.querySelector('.card.wiz');if(!c||!w)return;
+ if(w.step==1){const at=c.querySelector('.opts:not(.nav2)')||c.querySelector('.msg');const box=document.createElement('div');box.innerHTML=stdWiz();const el=box.firstChild;if(at)at.after(el);else c.appendChild(el);
+  el.querySelectorAll('[data-std]').forEach(b=>b.onclick=()=>{S.std=b.dataset.std;CATM.clear();render()})}
+ if(w.step==3&&(w.kind=='MCB'||w.kind=='RCBO')){const h=c.querySelector('h2');if(h&&!c.querySelector('.stdS')){const l=stdSel();h.after(l);const se=l.querySelector('select');se.onchange=()=>{S.std=se.value;CATM.clear();if(w.ver&&!verOptsW(w).some(v=>v.code==w.ver))w.ver=null;render()}}}}}
+// ===== only what is in the Hager catalogues: every wizard / panel choice must lead to at least one catalogue code =====
+const CATM=new Map();let CAT_IN=null;const _availC=avail,_polesC=polesOf,_vowC=verOptsW;
+function catCodeOf(o){try{const d={kind:o.kind,frame:o.frame,In:o.In,trip:o.trip,poles:o.poles||null,ver:o.ver||null,p:{}};try{prm(d).forEach(q=>d.p[q.k]=snap(q.o,q.df))}catch(e){}const c=devCode(d);return c&&!c.includes('…')?c:''}catch(e){return ''}}
+function catHas(o){if(!o||!o.kind||o.kind=='RCD')return true;const key=[S.std,o.kind,o.frame,o.In,o.trip,o.poles,o.ver].join('|');if(CATM.has(key))return CATM.get(key);
+ let r=false;const Ins=o.In?[o.In]:((FR[o.kind]||{})[o.frame]||[]);
+ outer:for(const In of Ins){const trips=o.trip?[o.trip]:_availC(o.kind,o.frame,In);for(const trip of trips){const ps=o.poles?[o.poles]:(_polesC(o.kind,o.frame,trip).length?_polesC(o.kind,o.frame,trip):[null]);
+  for(const poles of ps){const vs=o.ver?[{code:o.ver}]:_vowC({kind:o.kind,frame:o.frame,In,trip,poles});for(const v of vs){if(catCodeOf({kind:o.kind,frame:o.frame,In,trip,poles,ver:v.code})){r=true;break outer}}}}}
+ CATM.set(key,r);return r}
+// a kind is filtered only if the catalogue covers it (kinds whose codes cannot be built are left as they are)
+const catKind=k=>{const key='kind|'+k;if(CATM.has(key))return CATM.get(key);const r=Object.keys(FR[k]||{}).some(f=>catHas({kind:k,frame:f}));CATM.set(key,r);return r};
+function catIns(kind,frame,L){if(!catKind(kind))return L;const o=L.filter(In=>catHas({kind,frame,In}));return o.length?o:L}
+avail=function(kind,fr,In){const L=_availC(kind,fr,In);if(!catKind(kind)||!In)return L;return L.filter(t=>catHas({kind,frame:fr,In,trip:t}))};
+polesOf=function(kind,frame,trip){const L=_polesC(kind,frame,trip);if(CAT_IN==null||!catKind(kind))return L;const o=L.filter(p=>catHas({kind,frame,In:CAT_IN,trip,poles:p}));return o.length?o:L};
+verOptsW=function(w){const L=_vowC(w);if(!w||!w.In||!catKind(w.kind))return L;return L.filter(v=>catHas({kind:w.kind,frame:w.frame,In:w.In,trip:w.trip,poles:w.poles,ver:v.code}))};
+{const _wz=wiz;wiz=function(){CAT_IN=S.wiz&&S.wiz.In||null;try{return _wz()}finally{CAT_IN=null}}}
+{const _fp=fpVerOpts;fpVerOpts=function(d){CAT_IN=d&&d.In||null;try{return _fp(d)}finally{CAT_IN=null}}}
+// devices saved without poles: code from the poles the multi-wire diagram uses (single-phase 1P+N, three-phase 3P or 4P)
+{const _dc=devCode;devCode=function(d){const c=_dc(d);if(c||!d||d.poles||!['MCB','RCBO','MCCB'].includes(d.kind))return c;
+ let dp;try{dp=mfSingle(d)?'1P+N':(mfHasN(d)?'4P':'3P')}catch(e){dp='4P'}const alt=d.kind=='MCB'&&dp=='1P+N'?['1P+N','2P']:dp=='4P'?['4P','3P+N']:[dp];for(const p of alt){const x=_dc({...d,poles:p});if(x)return x}return ''}}
+// version labels: only the value of the chosen standard (Icn EN 60898 or Icu EN 60947-2) for MCB / RCBO
+function capTxt(lo,hi){const f=v=>String(Math.round(v*10)/10).replace('.',S.lang=='it'?',':'.');return (lo==hi?f(lo):f(lo)+'–'+f(hi))+' kA'}
+{const _vo=verOpts;verOpts=function(kind,frame,trip){const L=_vo(kind,frame,trip);if(kind!='MCB'&&kind!='RCBO')return L;const s47=S.std=='60947',lab=s47?'Icu':'Icn';
+ return L.map(v=>{const es=[...BU,...BD].filter(e=>famOk(e,kind,frame,trip)&&e.code==v.code);let vals=es.map(e=>s47?icuMax(e.icu):icn(e.icu)).filter(x=>x>0);const cm=CMCB[v.code];if(!vals.length&&cm){vals=s47&&cm.icu?cm.icu.map(x=>x[1]):cm.icn?[cm.icn]:cm.icu?cm.icu.map(x=>x[1]):[]}if(!vals.length)return v;
+  const seg=v.l.split(' · ');seg[seg.length-1]=lab+' '+capTxt(Math.min(...vals),Math.max(...vals));return {...v,l:seg.join(' · ')}})}}
+// SW: the h1000 / h1600 frames are hidden
+{const st=FR.SW;['h1000','h1600'].forEach(k=>{if(st&&st[k])delete st[k]})}
+
+// ===== "Optimize curves": only the selected breaker, overload settings fixed =====
+// the selected breaker's short-time / instantaneous settings (Isd, Tsd, Ii) are searched so that it is selective with the
+// breakers below it and with the one above (Tr included); Ir / Ir1 / Ir2 stay as set. If no setting works, a bubble says which pair and what to do
+const OPTK=['Tr','Isd','Tsd','Li']; // Tr optimizable (user, 06.11); Ir / Ir1 / Ir2 fixed
+Object.assign(D.it,{optOne:'Ottimizza questa curva',optAll:'Ottimizza tutte le curve',optOk:'{d}: tarature ottimizzate (Ir non modificata).',optNoK:'{d}: nessuna taratura di corto ritardo o istantanea da ottimizzare. Ir resta quella impostata.',
+ optFailDn:'{u} → {w}: con Ir di {u} fissata non si ottiene la selettività.\nCosa fare: aumenta Ir di {u}, riduci Ir o In di {w}, oppure scegli per {w} una curva più rapida.',
+ optFailUp:'{u} → {w}: {w} non è selettivo con l\'interruttore a monte {u}.\nCosa fare: seleziona {u} e premi Ottimizza curve, aumenta le tarature di {u} o riduci Ir di {w}.',optTitle:'Ottimizza curve'});
+Object.assign(D.en,{optOne:'Optimize this curve',optAll:'Optimize all curves',optOk:'{d}: settings optimized (Ir unchanged).',optNoK:'{d}: no short-time or instantaneous setting to optimize. Ir stays as set.',
+ optFailDn:'{u} → {w}: with the Ir of {u} fixed, selectivity cannot be reached.\nWhat to do: increase Ir of {u}, reduce Ir or In of {w}, or choose a faster curve for {w}.',
+ optFailUp:'{u} → {w}: {w} is not selective with the upstream breaker {u}.\nWhat to do: select {u} and press Optimize curves, increase the settings of {u} or reduce Ir of {w}.',optTitle:'Optimize curves'});
+function optOne(u){const ks=prm(u).filter(q=>OPTK.includes(q.k)),ws=kidsOC(u),up=pOC(u),orig={...u.p};
+ const pairs=[...ws.map(w=>[u,w]),...(up?[[up,u]]:[])];if(!pairs.length)return{ok:true,none:true};
+ const sat=()=>pairs.filter(([a,b])=>okPair(a,b)).length;let best=null,bk=-1,bs=1e9;
+ (function rec(j,sc){if(j==ks.length){const k=sat();if(k>bk||(k==bk&&sc<bs)){bk=k;bs=sc;best={...u.p}}return}const q=ks[j];q.o.forEach((v,x)=>{if(!(v>0)&&q.o.some(y=>y>0))return;u.p[q.k]=v;rec(j+1,sc+x)})})(0,0);
+ u.p=best||orig;const fail=pairs.filter(([a,b])=>!okPair(a,b));return{ok:!fail.length,fail,none:!ks.length}}
+function optBubble(txt,bad){document.querySelectorAll('.optbub').forEach(x=>x.remove());const b=$('#bOpt');if(!b)return;const t=document.createElement('div');t.className='optbub'+(bad?' bad':'');t.setAttribute('role','status');
+ t.innerHTML=`<b>${T('optTitle')}</b><div>${esc(txt).replace(/\n/g,'<br>')}</div><button aria-label="OK">✕</button>`;b.ownerDocument.body.appendChild(t);
+ const r=b.getBoundingClientRect(),W2=b.ownerDocument.defaultView.innerWidth;t.style.left=Math.max(8,Math.min(W2-t.offsetWidth-8,r.left))+'px';t.style.top=(r.bottom+8)+'px';
+ const off=()=>{t.remove();removeEventListener('pointerdown',pd,true)},pd=e=>{if(!t.contains(e.target)||e.target.tagName=='BUTTON')off()};setTimeout(()=>addEventListener('pointerdown',pd,true),50);if(!bad)setTimeout(off,6000)}
+function optimizeSel(){const u=cur();if(!u){optimize();return}const r=optOne(u),nm=x=>x.name||nameOf(x);
+ if(r.ok){S.msg=T(r.none?'optNoK':'optOk').replace('{d}',nm(u));draw(1);optBubble(S.msg,false);return}
+ const msgs=r.fail.map(([a,b])=>T(a===u?'optFailDn':'optFailUp').replace(/\{u\}/g,nm(a)).replace(/\{w\}/g,nm(b)));S.msg=msgs[0].split('\n')[0];draw(1);optBubble(msgs.join('\n\n'),true)}
+{const _ca5=ctxAct;ctxAct=function(a,i){if(a=='optOne'){if(i!=null)S.sel=i;optimizeSel();return}if(a=='optAll'){optimize();return}return _ca5(a,i)}}
+{const _b=boot;boot=function(){_b();const o=$('#bOpt');if(o){o.onclick=optimizeSel;o.title=T('optOne')}}}
+{const st=document.createElement('style');st.textContent=`.optbub{position:fixed;z-index:320;max-width:360px;background:#002841;color:#fff;font:500 12.5px/1.5 'Nunito Sans','Segoe UI',system-ui,sans-serif;padding:10px 30px 10px 13px;border-radius:10px;box-shadow:0 10px 30px #0006}
+.optbub.bad{background:#7a1f1f}.optbub b{display:block;margin-bottom:3px}.optbub button{position:absolute;top:6px;right:6px;background:none;border:0;color:#fff;font-size:14px;cursor:pointer;padding:2px 6px}
+.optbub::before{content:'';position:absolute;top:-6px;left:22px;border:6px solid transparent;border-top:0;border-bottom-color:inherit}`;document.head.appendChild(st)}
+
+// ===== 2: crosshair on / off button in the chart's tool column =====
+S.cxOff=true; // crosshair off at start-up (user request 06.11)
+Object.assign(D.it,{cxOn:'Mirino attivo: clic per disattivarlo',cxOffT:'Mirino disattivato: clic per attivarlo'});Object.assign(D.en,{cxOn:'Crosshair on: click to turn it off',cxOffT:'Crosshair off: click to turn it on'});
+{const _cb=cxBind;cxBind=function(){const ch=$('#chart'),z=ch&&ch.querySelector('.czb');if(z&&!z.querySelector('.cxTg')){const b=ch.ownerDocument.createElement('button');b.type='button';b.className='cxTg'+(S.cxOff?'':' on');b.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="5.5"/><path d="M12 2.5v5M12 16.5v5M2.5 12h5M16.5 12h5"/></svg>';b.title=T(S.cxOff?'cxOffT':'cxOn');b.setAttribute('aria-pressed',S.cxOff?'false':'true');b.onclick=e=>{e.stopPropagation();S.cxOff=!S.cxOff;drawChart()};z.appendChild(b)}
+ if(S.cxOff)return;_cb()}}
+{const st=document.createElement('style');st.textContent=`.czb .cxTg{display:grid;place-items:center}`;document.head.appendChild(st)}
+
+// ===== 3, 6, 7: clearer collapse / expand; diagram collapses to the left and the device panel to the right when they sit side by side =====
+Object.assign(D.it,{tgCol:'Comprimi',tgExp:'Espandi'});Object.assign(D.en,{tgCol:'Collapse',tgExp:'Expand'});
+function sideOf(k){const w=$('.wsp');if(k=='sld')return !!(w&&w.classList.contains('side'));if(k=='fp'){const g=$('.grid'),f=$('.fpc');if(!g||!f||f.closest('.wspb'))return false;const c=getComputedStyle(g).gridTemplateColumns.split(' ').filter(x=>x&&x!='0px');return c.length>=2}return false}
+{const _cu=cardsUI;cardsUI=function(){_cu();const w=$('.wsp'),g=$('.grid');
+ const sOff=!!S.coll.sld&&sideOf('sld');if(w)w.classList.toggle('sldOff',sOff);
+ if(g)g.classList.remove('fpOff');const fOff=!!S.coll.fp&&sideOf('fp');if(g)g.classList.toggle('fpOff',fOff);
+ CARDS.forEach(([k,q])=>{const e=$(q),c=e&&(e.classList.contains('card')?e:cardOf(e));if(!c)return;const b=c.querySelector(':scope > .cardTg');if(!b)return;const on=!!S.coll[k];
+  const lat=k=='sld'&&(sOff||(!on&&sideOf('sld')))?'L':k=='fp'&&(fOff||(!on&&sideOf('fp')))?'R':'';
+  b.classList.toggle('lat',!!lat);c.classList.toggle('latOff',!!lat&&on);
+  if(lat=='L')b.innerHTML=on?'<span>»</span>':'<span>«</span>';else if(lat=='R')b.innerHTML=on?'<span>«</span>':'<span>»</span>';
+  else b.innerHTML=on?`<span class="ic">▾</span><span class="tx">${T('tgExp')}</span>`:`<span class="ic">▴</span><span class="tx">${T('tgCol')}</span>`;
+  b.title=T(on?'cardExp':'cardCol');b.setAttribute('aria-expanded',on?'false':'true')})}}
+addEventListener('resize',()=>{try{cardsUI()}catch(e){}});
+{const st=document.createElement('style');st.textContent=`
+.card>.cardTg{width:auto;height:28px;border-radius:999px;padding:0 11px 0 9px;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--brand);background:var(--card,#fff);border:1px solid color-mix(in srgb,var(--brand) 45%,var(--ln));box-shadow:0 1px 3px #0b27331a}
+.card>.cardTg:hover{background:color-mix(in srgb,var(--brand) 10%,var(--card,#fff))}.card>.cardTg .ic{font-size:12px}
+.card.collapsed>.cardTg{background:var(--brand);color:#fff;border-color:var(--brand)}
+.card>.cardTg.lat{width:30px;padding:0;justify-content:center;font-size:16px}
+.card>h2,.card .stop>h2,.card .chh{padding-right:112px}
+.wsp.side.sldOff{grid-template-columns:48px minmax(0,1fr)!important}
+.wsp.side.sldOff>.sldc{padding:10px 4px!important;overflow:hidden}
+.grid.fpOff{grid-template-columns:minmax(0,1fr) 48px!important}
+.grid.fpOff>.fpc{padding:10px 4px!important;overflow:hidden;min-width:0}
+.card.latOff>.cardTg{position:static;margin:2px auto 10px;display:flex}
+.card.latOff{display:flex!important;flex-direction:column;align-items:center}
+.card.latOff h2{writing-mode:vertical-rl;transform:rotate(180deg);padding:0!important;margin:0 auto;white-space:nowrap;font-size:14px;border:0}
+.card.latOff h2::before{display:none}
+.card.latOff .stop{padding:0;display:block}.card.latOff .wgrip,.card.latOff .sgrip{display:none!important}
+
+.card.latOff>*:not(.cardTg):not(.stop):not(h2):not(.fph){display:none!important}`;document.head.appendChild(st)}
+
+// ===== 8: Optimize curves / Coordinate cables / Coordinate RCDs on the left, in the bar with the switchboards =====
+{const _db=dashBars;dashBars=function(){const keep=['#bOpt','#cOpt','#rOpt'].map(q=>$(q)).filter(Boolean);keep.forEach(x=>x.remove());_db();
+ const put=(btn,bar)=>{if(!btn)return;if(!bar){return false}const t=bar.querySelector('.mdt')||bar.firstChild;btn.classList.add('mdAct');if(t&&t.nextSibling)bar.insertBefore(btn,t.nextSibling);else bar.appendChild(btn);return true};
+ const lg=$('#leg'),cb=lg&&lg.previousElementSibling&&lg.previousElementSibling.classList.contains('mdbar')?lg.previousElementSibling:null;
+ const bo=keep.find(x=>x.id=='bOpt');if(bo&&!put(bo,cb)){const h=$('.chh');if(h)h.appendChild(bo)}
+ const cbody=$('#cBody'),cbar=cbody&&cbody.querySelector('.mdbar');const co=keep.find(x=>x.id=='cOpt'),ro=keep.find(x=>x.id=='rOpt');
+ if(cbar){const bars=[...document.querySelectorAll('#cBody .mdbar, #rBody .mdbar')],rh=document.querySelector('#rBody .crh')||cbody.querySelector('.crh');let rbar=rh?bars.find(x=>rh.compareDocumentPosition(x)&Node.DOCUMENT_POSITION_FOLLOWING):null;
+  const add=(bar,btns)=>{const box=document.createElement('span');box.className='mdActs';btns.forEach(x=>{if(x){box.appendChild(x);x.classList.add('mdAct')}});const t=bar.querySelector('.mdt');if(t&&t.nextSibling)bar.insertBefore(box,t.nextSibling);else bar.appendChild(box)};
+  if(rbar&&rbar!=cbar){add(cbar,[co]);add(rbar,[ro])}else add(cbar,[co,ro])}
+ else{if(co&&cbody)cbody.insertBefore(co,cbody.firstChild);if(ro){const h3=cbody&&cbody.querySelector('.crh');if(h3)h3.appendChild(ro)}}}}
+{const st=document.createElement('style');st.textContent=`.mdbar .mdAct{margin:0!important;position:static!important;float:none!important;font-size:12.5px!important;padding:6px 14px!important;height:auto!important;border-radius:999px!important}
+.mdbar .mdActs{display:inline-flex;gap:6px;flex-wrap:wrap}.chh{min-height:30px}`;document.head.appendChild(st)}
+
+// ===== 9: the standard also in the selected-device panel, next to the breaking capacity =====
+{const _dr=draw;draw=function(full){_dr(full);try{const fp=$('.fpc');if(!fp)return;fp.querySelectorAll('.stdS').forEach(x=>x.remove());const d=cur();if(!d||!['MCB','RCBO','MCCB','ACB'].includes(d.kind))return;
+ const sel=[...fp.querySelectorAll('select')].find(s=>/kA/.test(s.textContent)&&!s.closest('.stdS'));const l=stdSel();l.classList.add('fpStd');
+ const host=sel?(sel.closest('label')||sel):null;if(host&&host.parentElement)host.parentElement.insertBefore(l,host);else{const h=fp.querySelector('h2');if(h)h.after(l)}}catch(e){console.error(e)}}}
+{const st=document.createElement('style');st.textContent=`.fpc .stdS.fpStd{display:flex;flex-direction:column;align-items:stretch;gap:3px;margin:6px 0;font-size:12.5px}.fpc .stdS.fpStd span{font-weight:400;color:var(--mut)}.fpc .stdS.fpStd select{width:100%}`;document.head.appendChild(st)}
+
+// ===== 11: Icc in the KPI row is editable: whole installation (same Icc) or the switchboard of the selected breaker =====
+Object.assign(D.it,{kpIccT:'Icc presunta: modificala qui. Vale per tutto l\'impianto o, per quadro, per il quadro di questo interruttore.'});Object.assign(D.en,{kpIccT:'Prospective Isc: edit it here. It applies to the whole installation or, per board, to this breaker\'s switchboard.'});
+{const _dk=drawKpi;drawKpi=function(){_dk();const d=cur(),k=$('#kpi');if(!d||!k)return;const kp=[...k.querySelectorAll('.kp')].find(x=>(x.querySelector('small')||{}).textContent=='Icc');if(!kp)return;
+ const one=S.iccMode!='board',key=bKey(d),v=one?S.iccAll:(S.iccB[key]??d.icc);const b=kp.querySelector('b');if(!b)return;
+ b.innerHTML=`<input id="kpIcc" type="text" inputmode="decimal" value="${v??''}" aria-label="Icc kA" title="${esc(T('kpIccT'))}">`;kp.classList.add('kpEdit');
+ const i=b.querySelector('input');i.onclick=e=>e.stopPropagation();i.onchange=i.onkeydown=e=>{if(e.type=='keydown'&&e.key!='Enter')return;const n=parseFloat(String(i.value).replace(',','.'));if(!(n>=0))return;
+  if(one)S.iccAll=n;else S.iccB[key]=n;S._fiIcc='#kpIcc';draw(1)}}}
+{const st=document.createElement('style');st.textContent=`.kp.kpEdit b{display:inline-block}.kp.kpEdit input{width:3.2em;font:inherit;font-weight:800;color:inherit;border:1px dashed color-mix(in srgb,var(--brand) 50%,var(--ln));border-radius:8px;padding:0 6px;background:transparent}.kp.kpEdit input:focus{outline:2px solid var(--brand);border-style:solid}`;document.head.appendChild(st)}
+
+// ===== 10: start-up window always inside the screen (phones such as Pixel 7, 412 px wide) =====
+{const st=document.createElement('style');st.textContent=`#intro{grid-template-columns:minmax(0,1fr);padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+#intro .intw{box-sizing:border-box;max-width:calc(100vw - 24px)!important;min-width:0;justify-self:center;overflow:hidden}
+@media(max-width:560px){#intro .intw{padding:20px 12px 14px}#intro .intw .acrv{gap:clamp(2px,1.6vw,10px)!important;justify-content:center}#intro .intw .ac b{font-size:clamp(26px,8.4vw,44px)!important}#intro .intw .ac span{font-size:9.5px;letter-spacing:-.01em}#intro .intw .hg{font-size:18px}}
+@media(max-height:460px){#intro .intw{padding:12px 16px 10px}#intro .intw .ac b{font-size:clamp(26px,7vh,44px)!important}}`;document.head.appendChild(st)}
+// device of a series not certified to the chosen standard: note under the standard selector in the panel
+{const _dr=draw;draw=function(full){_dr(full);try{const fp=$('.fpc');if(!fp)return;fp.querySelectorAll('.stdNo').forEach(x=>x.remove());const d=cur();if(!d||d.kind!='MCB'||stdOk('MCB',d.ver))return;
+ const l=fp.querySelector('.stdS');const p=document.createElement('p');p.className='msg stdNo';p.style.color='#b36b00';p.textContent='⚠ '+T('stdNo')+' ('+(serStd(d)=='60898'?'EN 60898':'EN 60947-2')+')';if(l)l.after(p)}catch(e){console.error(e)}}}
+
+// ===== CEI 64-8: cables sized on the load (Ib), Kc per switchboard (EN 61439), voltage drop =====
+// Ib of a final line = load entered in A; Ib of a line feeding other breakers = Kc × Σ Ib downstream, always when the downstream lines have loads (field locked, grey).
+// Kc from EN 61439 (rated diversity factor): 1 circuit 1 · 2–3 0,9 · 4–5 0,8 · 6–9 0,7 · ≥ 10 0,6; editable per switchboard.
+// Checks: Ib ≤ In ≤ Iz (CEI 64-8 art. 433.2; If ≤ 1,45 Iz is met by In ≤ Iz for EN 60898 / EN 60947-2 breakers) and ΔU from the origin ≤ limit (default 4 %).
+S.vdMax=S.vdMax||4;
+const KCT=[[1,1],[3,.9],[5,.8],[9,.7],[Infinity,.6]],XL=8e-5; // x ≈ 0,08 mΩ/m
+const kcAuto=n=>{for(const [m,k] of KCT)if(n<=m)return k;return .6};
+const outs=d=>kids(d).filter(k=>k&&k!==d);
+function kcOf(d){const n=outs(d).length;return d.kc>0&&d.kc<=1?d.kc:kcAuto(n)}
+function ib1(d,seen){seen=seen||new Set();if(!d||seen.has(d))return{v:0,src:'none'};seen.add(d);const man=d.cab&&d.cab.ib>0?+d.cab.ib:0,ks=outs(d);
+ if(!ks.length)return man?{v:man,src:'man'}:{v:0,src:'none'};
+ let sum=0,any=false;ks.forEach(k=>{const r=ib1(k,seen);if(r.v>0){sum+=r.v;any=true}});
+ if(!any)return man?{v:man,src:'man'}:{v:0,src:'none'}; /* downstream loads present: always computed from them (user rule 06.11) */const kc=kcOf(d);return{v:kc*sum,src:'calc',sum,kc,n:ks.length}}
+const ibEff=d=>ib1(d).v;
+function sgl(d){try{return !!mfSingle(d)}catch(e){return S.volt=='230'}}
+const cosOf=c=>c&&c.cosf>0&&c.cosf<=1?+c.cosf:.9;
+function kwOf(d){const I=ibEff(d);if(!(I>0))return 0;const s=sgl(d);return (s?230:Math.sqrt(3)*400)*I*cosOf(d.cab)/1000}
+function vdLine(d){const c=d&&d.cab;if(!c||c.type=='BAR'||!(c.L>0)||!(c.S>0))return 0;const t=CT[c.type];if(!t)return 0;const I=ibEff(d);if(!(I>0))return 0;
+ const s=sgl(d),U=s?230:400,k=s?2:Math.sqrt(3),cf=cosOf(c),sf=Math.sqrt(1-cf*cf),n=c.n||1,r=CD.RHO[t.m]/(c.S*n),x=XL/n;return 100*k*c.L*I*(r*cf+x*sf)/U}
+function vdCum(d){let v=0,x=d,g=0;while(x&&g++<200){v+=vdLine(x);x=par(x)}return v}
+Object.assign(D.it,{ibT:'Ib (A) · kW',vdT:'ΔU %',ibCalc:'calcolata',ibMan:'impostata',ibPh1:'monofase 230 V',ibPh3:'trifase 400 V',cosL:'cos φ',kcL:'Kc contemporaneità',kcA:'norma',
+ ibInfo:'Kc {k} × Σ {s} A (circuiti a valle: {n}) = {v} A',ibInfoM:'Ib impostata {v} A (Σ a valle {s} A)',ibNone:'Nessun carico: inserisci Ib sulle linee finali',
+ vdL:'Caduta di tensione',vdLine:'linea',vdOrig:'dall\'origine',vdMaxL:'ΔU max',vdKo:'Caduta di tensione {v} % oltre il limite di {m} %',ibInKo:'Ib {i} A supera In/Ir {r} A: interruttore sottodimensionato per il carico',
+ ibPh:'carico (A)',ibLab:'Ib carico (A)',ibLabC:'calcolata dai circuiti a valle',vdNote:'CEI 64-8: Ib ≤ In ≤ Iz e caduta di tensione dall\'origine entro il limite. Ib delle linee che alimentano altri interruttori = Kc × somma delle Ib a valle (Kc EN 61439: 2–3 circuiti 0,9 · 4–5 0,8 · 6–9 0,7 · da 10 0,6). ΔU con r a 70 °C e x 0,08 mΩ/m.'});
+Object.assign(D.en,{ibT:'Ib (A) · kW',vdT:'ΔU %',ibCalc:'calculated',ibMan:'entered',ibPh1:'single-phase 230 V',ibPh3:'three-phase 400 V',cosL:'cos φ',kcL:'Kc diversity',kcA:'standard',
+ ibInfo:'Kc {k} × Σ {s} A (downstream circuits: {n}) = {v} A',ibInfoM:'Ib entered {v} A (Σ downstream {s} A)',ibNone:'No load: enter Ib on the final lines',
+ vdL:'Voltage drop',vdLine:'line',vdOrig:'from the origin',vdMaxL:'ΔU max',vdKo:'Voltage drop {v} % above the {m} % limit',ibInKo:'Ib {i} A exceeds In/Ir {r} A: breaker too small for the load',
+ ibPh:'load (A)',ibLab:'Ib load (A)',ibLabC:'calculated from the downstream circuits',vdNote:'IEC 60364 / CEI 64-8: Ib ≤ In ≤ Iz and voltage drop from the origin within the limit. Ib of lines feeding other breakers = Kc × sum of the downstream Ib (Kc EN 61439: 2–3 circuits 0.9 · 4–5 0.8 · 6–9 0.7 · 10 or more 0.6). ΔU with r at 70 °C and x 0.08 mΩ/m.'});
+const nf2=v=>nf(v,v<10?2:1);
+{const _cc=cabCalc;cabCalc=function(d){const r=_cc(d);if(!r)return r;const I=ibEff(d);r.Ib=I;r.ibSrc=ib1(d).src;
+ const rk={ok:0,chk:1,na:1,ko:2},bump=s=>{if((rk[s]||0)>(rk[r.st]||0))r.st=s};
+ const kIb=T('cIbKo');r.why=r.why.filter(w=>w!==kIb);
+ r.ibOk=!(I>0)||I<=(r.Ir||0)+1e-9;if(!r.ibOk){bump('ko');r.why.push(T('ibInKo').replace('{i}',nf(I,1)).replace('{r}',nf(r.Ir)))}
+ if(!r.bar){r.vd=vdLine(d);r.vdC=vdCum(d);r.vdOk=r.vdC<=S.vdMax+1e-9;if(I>0&&!r.vdOk){bump('ko');r.why.push(T('vdKo').replace('{v}',nf2(r.vdC)).replace('{m}',nf(S.vdMax,1)))}}
+ return r}}
+{const _cm=cabMin;cabMin=function(d,c0){const m=_cm(d,c0);if(!m||!(ibEff(d)>0))return m;const t=CT[c0.type],up=vdCum(par(d)),A0=m.S*m.n,ns=c0.n>1?[c0.n]:[1,2,3,4];
+ const cand=[];for(const n of ns)for(const S_ of cSecs(t)){if(n>1&&S_<70)continue;if(S_*n<A0-1e-9)continue;cand.push({S:S_,n})}cand.sort((a,b)=>a.S*a.n-b.S*b.n||a.n-b.n);
+ for(const x of cand){const o={...d,cab:{...c0,S:x.S,n:x.n}};if(up+vdLine(o)<=S.vdMax+1e-9)return x}return m}}
+{const _sn=snapshot;snapshot=function(){const o=_sn();o.vdMax=S.vdMax;return o}}
+{const _lp=loadProject;loadProject=function(o){S.vdMax=o&&+o.vdMax>0?+o.vdMax:4;return _lp(o)}}
+// table: Ib · kW and ΔU columns; panel: cos φ, Kc and the Ib / ΔU summary
+{const _d=drawC;drawC=function(){_d();try{const el=$('#cBody');if(!el)return;const tb=el.querySelector('table.ctab');if(!tb)return;
+ const hr=tb.querySelector('tr');const ths=hr?[...hr.children]:[];if(ths[4]&&!hr.querySelector('.thIb')){ths[4].insertAdjacentHTML('afterend',`<th class="thIb">${T('ibT')}</th><th class="thVd">${T('vdT')}</th>`)}
+ tb.querySelectorAll('tr.cdrow > td[colspan]').forEach(td=>td.colSpan=12);
+ tb.querySelectorAll('tr.crow').forEach(tr=>{const i=+tr.dataset.i,d=S.devs[i];if(!d)return;const tds=[...tr.children];const msg=tds.find(x=>x.colSpan==8);
+  const r=d.cab?cabCalc(d):null,ib=ib1(d),kw=kwOf(d),c=d.cab;
+  const ibBad=r&&r.Ib>0&&!r.ibOk;const ibC=`<td class="tdIb${ibBad?' ibBad':''}"${ibBad?` title="${esc(T('ibInKo').replace('{i}',nf(r.Ib,1)).replace('{r}',nf(r.Ir)))}"`:''}>${c?`<input class="cib" type="text" inputmode="decimal" data-num="1" data-i="${i}" value="${ib.src=='calc'?'':c.ib>0?String(c.ib).replace('.',S.lang=='it'?',':'.'):''}" ${ib.src=='calc'?'disabled':''} placeholder="${ib.src=='calc'?nf(ib.v,1):T('ibPh')}" title="${esc(ib.src=='calc'?T('ibInfo').replace('{k}',nf(ib.kc,2)).replace('{s}',nf(ib.sum,1)).replace('{n}',ib.n).replace('{v}',nf(ib.v,1)):T('ibPh'))}">`:(ib.v>0?nf(ib.v,1):'–')}${kw>0?`<br><small class="ckw">${nf(kw,kw<10?2:1)} kW · ${sgl(d)?'1~':'3~'}</small>`:''}</td>`;
+  const vdC=r&&!r.bar&&r.Ib>0?`<td><span class="cv ${r.vdOk?'g':'r'}" title="${esc(T('vdLine')+' '+nf2(r.vd)+' % · '+T('vdOrig')+' '+nf2(r.vdC)+' %')}">${nf2(r.vdC)}</span><br><small class="ckw">${T('vdLine')} ${nf2(r.vd)}</small></td>`:'<td>–</td>';
+  if(msg){msg.colSpan=6;msg.insertAdjacentHTML('beforebegin',ibC.replace(/<input[^>]*>/,ib.v>0?nf(ib.v,1):'–')+'<td>–</td>');return}
+  if(ibBad&&tds[6])tds[6].insertAdjacentHTML('afterbegin',`<span class="cv r">Ib ${nf(r.Ib,1)} &gt; ${nf(r.Ir)}</span><br>`);
+  if(tds[4])tds[4].insertAdjacentHTML('afterend',ibC+vdC)});
+ tb.querySelectorAll('input.cib').forEach(x=>{x.onclick=e=>e.stopPropagation();x.onchange=()=>{const d=S.devs[+x.dataset.i];if(!d||!d.cab)return;const v=parseFloat(String(x.value).replace(',','.'));d.cab.ib=v>0?v:0;draw(1)}});
+ // detail panel
+ const D_=cur(),det=el.querySelector('.cdet .cgrid');if(D_&&D_.cab&&det&&!det.querySelector('.cpCos')){const c=D_.cab,ib=ib1(D_),ks=outs(D_).length,r=cabCalc(D_);
+  det.insertAdjacentHTML('beforeend',`<label>${T('cosL')}<input class="cpCos" type="text" inputmode="decimal" data-num="1" value="${String(cosOf(c)).replace('.',S.lang=='it'?',':'.')}"></label>${ks?`<label>${T('kcL')} <small>(${T('kcA')} ${nf(kcAuto(ks),1)})</small><input class="cpKc" type="text" inputmode="decimal" data-num="1" value="${D_.kc>0?String(D_.kc).replace('.',S.lang=='it'?',':'.'):''}" placeholder="${nf(kcAuto(ks),1)}"></label>`:''}`);
+  const res=el.querySelector('.cdet .cres');if(res){const kw=kwOf(D_),ph=sgl(D_)?T('ibPh1'):T('ibPh3');
+   const l1=ib.src=='calc'?T('ibInfo').replace('{k}',nf(ib.kc,2)).replace('{s}',nf(ib.sum,1)).replace('{n}',ib.n).replace('{v}',nf(ib.v,1)):ib.src=='man'?(ib.sum!=null?T('ibInfoM').replace('{v}',nf(ib.v,1)).replace('{s}',nf(ib.sum,1)):'Ib '+nf(ib.v,1)+' A'):T('ibNone');
+   let h=`<div class="cib1"><b>Ib</b>: ${l1}${kw>0?` · P ≈ <b>${nf(kw,kw<10?2:1)} kW</b> <small>(${ph}, cos φ ${nf(cosOf(c),2)})</small>`:''}${ib.v>0&&r?` · Ib ${ib.v<=r.Ir+1e-9?'≤':'>'} In/Ir ${nf(r.Ir)} A ${r.ibOk?'✔':'✘'}`:''}</div>`;
+   if(r&&!r.bar&&ib.v>0)h+=`<div class="cvd1"><b>${T('vdL')}</b>: ${T('vdLine')} ${nf2(r.vd)} % · ${T('vdOrig')} <b>${nf2(r.vdC)} %</b> ${r.vdOk?'≤':'>'} ${nf(S.vdMax,1)} % → ${r.vdOk?'✔':'✘'}</div>`;
+   res.insertAdjacentHTML('afterbegin',h)}
+  const ci=det.querySelector('.cpIb');if(ci){const sp=ci.closest('label')&&ci.closest('label').querySelector('span');if(sp)sp.innerHTML=T('ibLab')+(ks?' <small>('+T('ibLabC')+')</small>':'');if(ib.src=='calc'){ci.placeholder=nf(ib.v,1);ci.value='';ci.disabled=true}}
+  const num=v=>parseFloat(String(v).replace(',','.'));
+  const cs=det.querySelector('.cpCos');cs.onchange=()=>{const v=num(cs.value);c.cosf=v>0&&v<=1?v:0.9;draw(1)};
+  const kc=det.querySelector('.cpKc');if(kc)kc.onchange=()=>{const v=num(kc.value);D_.kc=v>0&&v<=1?v:0;draw(1)}}
+ if(!el.querySelector('.vdNote')){const n=el.querySelector('p.msg');if(n)n.insertAdjacentHTML('afterend',`<p class="msg vdNote">${T('vdNote')}</p>`)}
+ }catch(e){console.error(e)}}}
+// ΔU limit in the cables bar
+{const _db=dashBars;dashBars=function(){_db();try{const cb=$('#cBody'),bar=cb&&cb.querySelector('.mdbar');if(!bar||bar.querySelector('.vdMx'))return;
+ const l=document.createElement('label');l.className='vdMx';l.title=T('vdL');l.innerHTML=`<span>${T('vdMaxL')}</span><input type="text" inputmode="decimal" value="${String(S.vdMax).replace('.',S.lang=='it'?',':'.')}"> %`;
+ const x=l.querySelector('input');x.onclick=e=>e.stopPropagation();x.onchange=()=>{const v=parseFloat(String(x.value).replace(',','.'));S.vdMax=v>0&&v<=20?v:4;draw(1)};bar.appendChild(l)}catch(e){console.error(e)}}}
+{const st=document.createElement('style');st.textContent=`.ctab input.cib{width:70px}.ctab input.cib:disabled{background:#eef1f4;color:#555;cursor:not-allowed}.ctab .ibBad input.cib,.ctab .ibBad{color:#c62828}.ctab .ibBad input.cib{border-color:#c62828;background:#fdecec}.ctab .ckw{color:var(--mut);font-size:11px;white-space:nowrap}.vdMx{display:inline-flex;align-items:center;gap:6px;font-size:13px}.vdMx span{font-weight:700}.vdMx input{width:52px;padding:4px 6px;border:1px solid #c9d3dd;border-radius:6px;text-align:right}.cdet .cib1,.cdet .cvd1{margin-bottom:2px}`;document.head.appendChild(st)}
+// reports (PDF / Excel): Ib, kW and voltage drop added to the line description
+{const _cr=cRep;cRep=function(){return _cr().map(x=>{const I=ibEff(x.d);if(!(I>0))return x;const r=cabCalc(x.d),kw=kwOf(x.d);
+ return {...x,line:x.line+' · Ib '+nf(I,1)+' A ('+nf(kw,kw<10?2:1)+' kW)'+(r&&!r.bar&&r.vdC!=null?' · ΔU '+nf2(r.vdC)+' % / '+nf(S.vdMax,1)+' %':'')}})}}
+// version labels with a known In (wizard, panel, back-up table): one breaking-capacity value, the one of that rating, not the series range
+{const _vo=verOpts;verOpts=function(kind,frame,trip){const L=_vo(kind,frame,trip);if((kind!='MCB'&&kind!='RCBO')||!(CAT_IN>0))return L;
+ return L.map(v=>{try{const pr={kind,frame,In:CAT_IN,trip,ver:v.code,p:{}},x=ownCap(pr);if(!(x>0))return v;const seg=v.l.split(' · ');seg[seg.length-1]=capLbl(pr)+' '+capTxt(x,x);return {...v,l:seg.join(' · ')}}catch(e){return v}})}}
+// board filter chosen (Quadri chips): the selected device moves into that board, so the In / Icc boxes and the panel follow it
+{const _dr=draw;draw=function(full){try{if(S.bdF!==S._bdFp){S._bdFp=S.bdF;const d=cur();if(S.iccMode=='board'&&S.bdF&&(!d||bKey(d)!==S.bdF)){const L=ordered().map(x=>x[0]).filter(x=>bKey(x)===S.bdF);if(L.length)S.sel=S.devs.indexOf(L[0])}}}catch(e){console.error(e)}return _dr(full)}}
+// the project file keeps the language: reopening it switches the program to the language it was saved in
+{const _sn=snapshot;snapshot=function(){const o=_sn();o.lang=S.lang;return o}}
+{const _lp=loadProject;loadProject=function(o){const nl=o&&(o.lang=='it'||o.lang=='en')?o.lang:null,old=S.lang;if(nl)S.lang=nl;const r=_lp(o);if(r===false){S.lang=old;return r}if(nl&&nl!==old)setTimeout(()=>{try{boot()}catch(e){console.error(e)}},0);return r}}
+// lines whose Ib is calculated from downstream: an old typed value is dropped (it would show in the overload line)
+{const _dr=draw;draw=function(full){try{S.devs.forEach(d=>{if(d.cab&&d.cab.ib>0&&ib1(d).src=='calc')d.cab.ib=0})}catch(e){}return _dr(full)}}
+{const _d=drawC;drawC=function(){_d();try{const D_=cur(),el=$('#cBody');if(!D_||!D_.cab||!el)return;const ib=ib1(D_);if(!(ib.v>0)||ib.src!='calc')return;
+ const dv=[...el.querySelectorAll('.cdet .cres > div')].find(x=>{const b=x.querySelector('b');return b&&b.textContent==T('cOvl')});if(!dv)return;const r=cabCalc(D_);
+ const b=dv.querySelector('b');b.insertAdjacentHTML('afterend',`: Ib ${nf(ib.v,1)} ${r.ibOk?'≤':'>'}`);const nx=b.nextSibling&&b.nextSibling.nextSibling;if(nx&&nx.nodeType==3)nx.textContent=nx.textContent.replace(/^:\s*/,' ')}catch(e){console.error(e)}}}
+// the project file keeps the window layout: collapsed / expanded cards, side strips, sizes, zoom, crosshair, switchboard filter
+const VIEWK=['sw','h_sld','h_pair','chH','zm','cxOff','bdF'];
+{const _sn=snapshot;snapshot=function(){const o=_sn();const v={coll:{...(S.coll||{})}};VIEWK.forEach(k=>{if(S[k]!=null)v[k]=S[k]});o.view=v;return o}}
+{const _lp=loadProject;loadProject=function(o){const v=o&&o.view&&typeof o.view=='object'?o.view:null;const r=_lp(o);if(r===false||!v)return r;
+ try{if(v.coll&&typeof v.coll=='object'){S.coll={};Object.keys(v.coll).forEach(k=>{if(v.coll[k])S.coll[k]=true})}
+  VIEWK.forEach(k=>{S[k]=v[k]!=null?v[k]:null});if(S.cxOff==null)S.cxOff=true;S._bdFp=S.bdF;
+  if(typeof render=='function')render()}catch(e){console.error(e)}return r}}
+
+// ===== four section cards: Selettività · Filiazione · Dimensionamento cavi · Coordinamento differenziali (user, 06.11) =====
+Object.assign(D.it,{sel:'Selettività',bkT:'Filiazione',cT:'Dimensionamento cavi',rT:'Coordinamento differenziali'});
+Object.assign(D.en,{sel:'Selectivity',bkT:'Back-up',cT:'Cable sizing',rT:'RCD coordination'});
+function rCardEnsure(){const cc=$('#cCard');if(cc&&!$('#rCard')){const c=document.createElement('div');c.className='card full';c.id='rCard';c.innerHTML=`<h2>${T('rT')}</h2><div id="rBody"></div>`;cc.after(c)}}
+if(S.coll&&S.coll.r===undefined)S.coll.r=true;
+{const _d=drawC;drawC=function(){_d();try{rCardEnsure();const el=$('#cBody'),rb=$('#rBody');if(!el||!rb)return;rb.innerHTML='';const h=el.querySelector('h3.crh');if(!h)return;
+ const mv=[];let x=h;while(x){const n=x.nextElementSibling;mv.push(x);x=n}
+ const last=mv[mv.length-1];if(last&&last.tagName=='P'&&!last.previousElementSibling.matches('.wrapx'))mv.pop(); // keep the general sources note (cables) in the cables card
+ mv.forEach(n=>rb.appendChild(n))}catch(e){console.error(e)}}}
+{const st=document.createElement('style');st.textContent=`#rBody h3.crh{font-size:0;margin:0;height:0;overflow:hidden;border:0;padding:0}`;document.head.appendChild(st)}
+
+// ===== multi-wire diagram: DXF export (vector, AutoCAD R12 ASCII; opens in AutoCAD / BricsCAD / DraftSight / LibreCAD, Save As DWG) =====
+// built from the same sheets as the PDF: A3 sheets side by side (430 mm pitch), 1 unit = 1 mm, Y up; layers by content.
+Object.assign(D.it,{mfDxf:'Salva DXF',mfDxfT:'Schema in DXF vettoriale (mm, fogli A3 affiancati): si apre in AutoCAD e negli altri CAD e si salva in DWG'});
+Object.assign(D.en,{mfDxf:'Save DXF',mfDxfT:'Vector DXF drawing (mm, A3 sheets side by side): opens in AutoCAD and other CAD programs and can be saved as DWG'});
+const DXF_ACI=[[1,255,0,0],[2,255,255,0],[3,0,255,0],[4,0,255,255],[5,0,0,255],[6,255,0,255],[7,0,0,0],[8,128,128,128],[9,192,192,192],[30,255,127,0],[34,153,76,0],[32,165,82,0],[150,0,127,255],[94,0,165,0],[14,165,0,0],[40,255,191,0],[52,255,255,127]];
+const DXF_COND=new Set(['#7b4a26','#151515','#8c8c8c','#1e88e5','#2e9d3a','#c8b400','#d4b106','#9e9e9e']);
+function dxfAci(c){if(!c||c=='none')return 7;let h=String(c).trim().toLowerCase();if(h=='black')return 7;if(h=='white'||h=='#fff'||h=='#ffffff')return 7;
+ if(/^#[0-9a-f]{3}$/.test(h))h='#'+h.slice(1).split('').map(x=>x+x).join('');const m=/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/.exec(h);if(!m)return 7;
+ const r=parseInt(m[1],16),g=parseInt(m[2],16),b=parseInt(m[3],16);if(Math.max(r,g,b)-Math.min(r,g,b)<24)return r<90?7:r<170?8:9;
+ let best=7,bd=1e9;DXF_ACI.forEach(([i,R,G,B])=>{const d=(r-R)**2+(g-G)**2+(b-B)**2;if(d<bd){bd=d;best=i}});return best}
+function dxfTxt(s){let o='';for(const ch of String(s)){const c=ch.codePointAt(0);if(c>=0x2600)continue;if(c<128||(c>=160&&c<256))o+=ch;else o+='\\U+'+c.toString(16).toUpperCase().padStart(4,'0')}return o}
+function svgToDxf(sheets){const out=[],W=430,H=297;const e=(...kv)=>{for(let i=0;i<kv.length;i+=2)out.push(String(kv[i]),String(kv[i+1]))};
+ const fx=v=>(Math.round(v*1000)/1000).toString();let x0=0,X=x=>fx(x+x0),Y=y=>fx(H-y);
+ const ent=[];const add=a=>ent.push(a);
+ const style=el=>{const st=el.getAttribute('stroke'),fi=el.getAttribute('fill'),da=el.getAttribute('stroke-dasharray');return{st:st&&st!='none'?st:null,fi:fi&&fi!='none'?fi:null,dash:!!da,fo:parseFloat(el.getAttribute('fill-opacity')||'1')}};
+ const layOf=(el,s,kind)=>{if(kind=='text')return 'TESTI';const c=(s.st||s.fi||'').toLowerCase();if(DXF_COND.has(c))return 'CONDUTTORI';return 'SIMBOLI'};
+ const seg=(L,col,dash,a,b,c,d)=>add({t:'LINE',L,col,dash,p:[a,b,c,d]});
+ sheets.forEach((sv,k)=>{x0=k*W;const dom=new DOMParser().parseFromString(sv,'image/svg+xml');
+  dom.querySelectorAll('line,rect,circle,ellipse,path,text').forEach(el=>{const s=style(el),tg=el.tagName,n=a=>parseFloat(el.getAttribute(a)||'0');
+   if(tg=='line'){if(!s.st)return;seg(layOf(el,s),dxfAci(s.st),s.dash,n('x1'),n('y1'),n('x2'),n('y2'));return}
+   if(tg=='rect'){const x=n('x'),y=n('y'),w=n('width'),h=n('height');if(!s.st)return;const L=(Math.abs(x-10)<.01&&Math.abs(y-10)<.01&&w>390)?'CORNICE':layOf(el,s),c=dxfAci(s.st);
+    seg(L,c,s.dash,x,y,x+w,y);seg(L,c,s.dash,x+w,y,x+w,y+h);seg(L,c,s.dash,x+w,y+h,x,y+h);seg(L,c,s.dash,x,y+h,x,y);return}
+   if(tg=='circle'||tg=='ellipse'){const cx=n('cx'),cy=n('cy'),r=tg=='circle'?n('r'):(n('rx')+n('ry'))/2,col=s.st||s.fi;if(!col||!(r>0))return;add({t:'CIRCLE',L:layOf(el,{st:col}),col:dxfAci(col),dash:s.dash,p:[cx,cy,r],solid:!s.st&&!!s.fi});return}
+   if(tg=='path'){const col=s.st||s.fi;if(!col)return;const L=layOf(el,{st:col}),c=dxfAci(col);const tk=(el.getAttribute('d')||'').match(/[a-zA-Z]|-?\d*\.?\d+(?:e-?\d+)?/g)||[];
+    let i=0,cmd='',x=0,y=0,sx=0,sy=0;const num=()=>parseFloat(tk[i++]);
+    while(i<tk.length){if(/[a-zA-Z]/.test(tk[i]))cmd=tk[i++];
+     if(cmd=='M'){x=num();y=num();sx=x;sy=y;cmd='L'}else if(cmd=='m'){x+=num();y+=num();sx=x;sy=y;cmd='l'}
+     else if(cmd=='L'){const a=num(),b=num();seg(L,c,s.dash,x,y,a,b);x=a;y=b}else if(cmd=='l'){const a=x+num(),b=y+num();seg(L,c,s.dash,x,y,a,b);x=a;y=b}
+     else if(cmd=='H'){const a=num();seg(L,c,s.dash,x,y,a,y);x=a}else if(cmd=='h'){const a=x+num();seg(L,c,s.dash,x,y,a,y);x=a}
+     else if(cmd=='V'){const b=num();seg(L,c,s.dash,x,y,x,b);y=b}else if(cmd=='v'){const b=y+num();seg(L,c,s.dash,x,y,x,b);y=b}
+     else if(cmd=='Z'||cmd=='z'){seg(L,c,s.dash,x,y,sx,sy);x=sx;y=sy}else i++}
+    return}
+   if(tg=='text'){const tx=(el.textContent||'').replace(/\s+/g,' ').trim();if(!tx)return;const fs=parseFloat(el.getAttribute('font-size')||'2.5'),an=el.getAttribute('text-anchor')||'start';
+    const tr=/rotate\(\s*(-?[\d.]+)/.exec(el.getAttribute('transform')||'');add({t:'TEXT',L:'TESTI',col:dxfAci(el.getAttribute('fill')||'#000'),p:[n('x'),n('y')],h:fs*.72,rot:tr?-parseFloat(tr[1]):0,al:an=='middle'?1:an=='end'?2:0,s:tx,b:el.getAttribute('font-weight')=='700'})}});
+  ent.forEach(a=>{a.k=a.k??k});});
+ // header + tables
+ const n=sheets.length;e(0,'SECTION',2,'HEADER',9,'$ACADVER',1,'AC1009',9,'$DWGCODEPAGE',3,'ANSI_1252',9,'$INSBASE',10,0,20,0,30,0,9,'$EXTMIN',10,0,20,0,30,0,9,'$EXTMAX',10,n*W,20,H,30,0,9,'$LIMMIN',10,0,20,0,9,'$LIMMAX',10,n*W,20,H,9,'$MEASUREMENT',70,1,9,'$LUNITS',70,2,0,'ENDSEC');
+ e(0,'SECTION',2,'TABLES');
+ e(0,'TABLE',2,'LTYPE',70,2,0,'LTYPE',2,'CONTINUOUS',70,0,3,'Solid line',72,65,73,0,40,0,0,'LTYPE',2,'DASHED',70,0,3,'__ __ __',72,65,73,2,40,2,49,1.2,49,-.8,0,'ENDTAB');
+ const LAY=[['CORNICE',7],['CONDUTTORI',7],['SIMBOLI',7],['TESTI',7]];e(0,'TABLE',2,'LAYER',70,LAY.length);LAY.forEach(([l,c])=>e(0,'LAYER',2,l,70,0,62,c,6,'CONTINUOUS'));e(0,'ENDTAB');
+ e(0,'TABLE',2,'STYLE',70,2,0,'STYLE',2,'STANDARD',70,0,40,0,41,1,50,0,71,0,42,2.5,3,'arial.ttf',4,'',0,'STYLE',2,'BOLD',70,0,40,0,41,1,50,0,71,0,42,2.5,3,'arialbd.ttf',4,'',0,'ENDTAB');
+ e(0,'ENDSEC',0,'SECTION',2,'ENTITIES');
+ ent.forEach(a=>{x0=a.k*W;const lt=a.dash?['6','DASHED']:[];
+  if(a.t=='LINE'){e(0,'LINE',8,a.L,62,a.col,...lt,10,X(a.p[0]),20,Y(a.p[1]),30,0,11,X(a.p[2]),21,Y(a.p[3]),31,0)}
+  else if(a.t=='CIRCLE'){e(0,'CIRCLE',8,a.L,62,a.col,...lt,10,X(a.p[0]),20,Y(a.p[1]),30,0,40,fx(a.p[2]));if(a.solid&&a.p[2]<1.5){e(0,'SOLID',8,a.L,62,a.col,10,X(a.p[0]-a.p[2]*.7),20,Y(a.p[1]-a.p[2]*.7),30,0,11,X(a.p[0]+a.p[2]*.7),21,Y(a.p[1]-a.p[2]*.7),31,0,12,X(a.p[0]-a.p[2]*.7),22,Y(a.p[1]+a.p[2]*.7),32,0,13,X(a.p[0]+a.p[2]*.7),23,Y(a.p[1]+a.p[2]*.7),33,0)}}
+  else if(a.t=='TEXT'){const al=a.al?[72,a.al,11,X(a.p[0]),21,Y(a.p[1]),31,0]:[];e(0,'TEXT',8,a.L,62,a.col,10,X(a.p[0]),20,Y(a.p[1]),30,0,40,fx(a.h),1,dxfTxt(a.s),50,fx(a.rot),7,a.b?'BOLD':'STANDARD',...al)}});
+ e(0,'ENDSEC',0,'EOF');return out.join('\r\n')+'\r\n'}
+async function mfDxf(btn){const t=btn.textContent;btn.disabled=true;try{const txt=svgToDxf(mfSheets());const by=new Uint8Array(txt.length);for(let i=0;i<txt.length;i++){const c=txt.charCodeAt(i);by[i]=c<256?c:63}
+  const blob=new Blob([by],{type:'application/dxf'}),fn='SILVIA-BC_multifilare_'+new Date().toISOString().slice(0,10)+'.dxf';let dl=null;try{dl=window.claude&&await window.claude.use('downloads')}catch(e){}
+  if(dl)await dl.save({filename:fn,data:blob});else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}}
+ catch(e){if(!(e&&e.code=='declined')){console.error(e);alert(T('pdfErr'))}}finally{btn.disabled=false;btn.textContent=t}}
+{const _o=mfOpen;mfOpen=function(){const r=_o.apply(this,arguments);try{const p=$('#mfPdf');if(p&&!$('#mfDxf')){const b=document.createElement('button');b.id='mfDxf';b.textContent=T('mfDxf');b.title=T('mfDxfT');b.onclick=()=>mfDxf(b);p.after(b)}}catch(e){console.error(e)}return r}}
 
 loadData();boot();showIntro();window._glhOff=1;
 let _rz;addEventListener('resize',()=>{clearTimeout(_rz);_rz=setTimeout(()=>{if($('#sld')&&S.devs.length){if(!S.zm)drawSld();if($('#chart'))drawChart()}},120)});
