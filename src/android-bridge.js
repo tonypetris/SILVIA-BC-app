@@ -93,3 +93,12 @@
   function add() { document.body.appendChild(b); document.body.appendChild(tip); show(); }
   if (document.body) add(); else document.addEventListener('DOMContentLoaded', add);
 })();
+
+/* Camera code reading: ML Kit text recognition (on-device, offline) through the local SilviaOcr plugin.
+   The program shows the camera button only when window.SILVIA_OCR exists. */
+(function () {
+  var C = window.Capacitor;
+  if (!C || !C.isNativePlatform || !C.isNativePlatform()) return;
+  var OCR = C.registerPlugin('SilviaOcr');
+  window.SILVIA_OCR = function (dataUrl) { return OCR.recognize({ image: dataUrl }); };
+})();

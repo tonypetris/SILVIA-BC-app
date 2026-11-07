@@ -41,3 +41,35 @@ x = x.replace(/\s*android:screenOrientation="[^"]*"/g, '');
 x = x.replace(/<activity\b/, '<activity android:screenOrientation="fullUser" android:resizeableActivity="true"');
 fs.writeFileSync(mf, x);
 console.log('android: rotation enabled (fullUser, configChanges kept)');
+
+// camera code reading: local Capacitor plugin with ML Kit text recognition (bundled Latin model, offline)
+{
+  const cfg = JSON.parse(fs.readFileSync(R('capacitor.config.json'), 'utf8'));
+  const dir = R('android/app/src/main/java/' + cfg.appId.split('.').join('/'));
+  fs.copyFileSync(R('tools/native/SilviaOcrPlugin.java'), path.join(dir, 'SilviaOcrPlugin.java'));
+  const ma = path.join(dir, 'MainActivity.java');
+  fs.writeFileSync(ma, `package ${cfg.appId};
+
+import android.os.Bundle;
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(SilviaOcrPlugin.class);
+        super.onCreate(savedInstanceState);
+    }
+}
+`);
+  let gg = fs.readFileSync(g, 'utf8');
+  if (!gg.includes('com.google.mlkit:text-recognition')) {
+    gg = gg.replace(/dependencies \{/, "dependencies {\n    implementation 'com.google.mlkit:text-recognition:16.0.0'");
+    fs.writeFileSync(g, gg);
+  }
+  let mx = fs.readFileSync(mf, 'utf8');
+  if (!mx.includes('android.permission.CAMERA')) {
+    mx = mx.replace(/<application\b/, '<uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n\n    <application');
+    fs.writeFileSync(mf, mx);
+  }
+  console.log('android: SilviaOcr plugin (ML Kit text recognition) and camera permission added');
+}
