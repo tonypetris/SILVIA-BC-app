@@ -71,5 +71,12 @@ public class MainActivity extends BridgeActivity {
     mx = mx.replace(/<application\b/, '<uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n\n    <application');
     fs.writeFileSync(mf, mx);
   }
+  // 1-W45.4: files saved in Documents/SILVIA-BC. Android 11+ needs no permission; Android 10 and older need these.
+  mx = fs.readFileSync(mf, 'utf8');
+  if (!mx.includes('android.permission.WRITE_EXTERNAL_STORAGE')) {
+    mx = mx.replace(/<application\b/, '<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n\n    <application');
+  }
+  if (!mx.includes('requestLegacyExternalStorage')) mx = mx.replace(/<application\b/, '<application android:requestLegacyExternalStorage="true"');
+  fs.writeFileSync(mf, mx);
   console.log('android: SilviaOcr plugin (ML Kit text recognition) and camera permission added');
 }

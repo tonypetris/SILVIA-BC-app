@@ -2870,6 +2870,22 @@ ask=function(title,body,ok,no){return new Promise(res=>{const DQ=actDoc(),WQ=DQ.
   const n=D0.createElement('div');n.className='popNote';n.textContent=LL('Procedura guidata aperta nella finestra principale','Wizard opened in the main window');n.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:9999;background:#0b6fb6;color:#fff;font:600 13px system-ui,sans-serif;padding:8px 14px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.25)';
   D0.body.appendChild(n);setTimeout(()=>n.remove(),3500)}}catch(e){}return r}}
 
+/* 8 Nov evening: devices without a curve (pure RCD, switch-disconnector) stay visible in the "Curve visibility" list,
+   so the list follows the single-line diagram; the selectivity pairs that skip them say "via <code>". */
+{const _bl=bdLists;bdLists=function(){const r=_bl.apply(this,arguments);try{
+ qAll('#vis .vr').forEach(row=>{const b=row.querySelector('[data-sel]');const d=b&&S.devs[+b.dataset.sel];if(!d||!NOC(d))return;
+  if(typeof bdIn=='function'&&!bdIn(d))return;row.style.display='';row.classList.add('vrNoc');
+  if(!row.querySelector('.vnoc')){row.querySelectorAll('.vb').forEach(x=>x.remove());const s=document.createElement('span');s.className='vnoc';
+   s.textContent=d.kind=='RCD'?LL('differenziale puro · senza curva','RCCB · no trip curve'):LL('sezionatore · senza curva','switch-disconnector · no trip curve');row.appendChild(s)}})
+ }catch(e){console.error(e)}return r}}
+{const _dd=drawDash;drawDash=function(){const r=_dd.apply(this,arguments);try{
+ const v=S.devs.filter(d=>d.parent!=null&&!NOC(d)&&pOC(d)),rows=[...document.querySelectorAll('#dash table tr')].filter(t=>!t.querySelector('th')&&t.querySelectorAll('[data-sel]').length>1);
+ rows.forEach((tr,i)=>{const w=v[i];if(!w)return;const via=[];let p=par(w);while(p&&NOC(p)){via.unshift(p);p=par(p)}if(!via.length)return;
+  const td=tr.querySelector('td');if(!td||td.querySelector('.pvia'))return;const s=document.createElement('span');s.className='pvia';
+  s.textContent=LL('tramite ','via ')+via.map(x=>{let c='';try{c=devCode(x)||''}catch(e){}return c||x.name||nameOf(x)}).join(', ');td.appendChild(s)})
+ }catch(e){console.error(e)}return r}}
+{const st=document.createElement('style');st.textContent='#vis .vr.vrNoc .vn{opacity:.75}#vis .vnoc{grid-column:2/4;justify-self:end;font-size:12px;color:var(--mut,#667);font-style:italic;padding:4px 6px;white-space:nowrap}#dash .pvia{display:block;font-size:11px;color:var(--mut,#667);margin:2px 0 0 4px}';document.head.appendChild(st)}
+
 loadData();boot();showIntro();window._glhOff=1;
 let _rz;addEventListener('resize',()=>{clearTimeout(_rz);_rz=setTimeout(()=>{if($('#sld')&&S.devs.length){if(!S.zm)drawSld();if($('#chart'))drawChart()}},120)});
 </script></body></html>
