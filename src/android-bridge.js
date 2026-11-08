@@ -9,6 +9,12 @@ SILVIA_BRIDGE.parts.files = function () {
   var C = window.Capacitor;
   var FS = C.registerPlugin('Filesystem'), SH = C.registerPlugin('Share');
   var busy = false;
+  var BLOBS = {};
+  try {
+    var mk = URL.createObjectURL, rv = URL.revokeObjectURL;
+    URL.createObjectURL = function (o) { var u = mk.apply(URL, arguments); try { if (o instanceof Blob) BLOBS[u] = o; } catch (e) {} return u; };
+    URL.revokeObjectURL = function (u) { setTimeout(function () { delete BLOBS[u]; }, 60000); return rv.apply(URL, arguments); };
+  } catch (e) {}
   function b64(blob) {
     return new Promise(function (res, rej) {
       var r = new FileReader();
@@ -31,7 +37,8 @@ SILVIA_BRIDGE.parts.files = function () {
   function it() { return !(window.S && S.lang === 'en'); }
   async function saveDocs(name, data) {
     var dot = name.lastIndexOf('.'), base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
-    try { var p = await FS.checkPermissions(); if (p && p.publicStorage && p.publicStorage !== 'granted') await FS.requestPermissions(); } catch (e) {}
+    var av = +((navigator.userAgent.match(/Android (\d+)/) || [])[1] || 0);
+    if (av && av < 11) try { var p = await FS.checkPermissions(); if (p && p.publicStorage && p.publicStorage !== 'granted') await FS.requestPermissions(); } catch (e) {}
     var last;
     for (var k = 0; k < 6; k++) {
       var fn = k ? base + ' (' + (k + 1) + ')' + ext : name;
@@ -40,25 +47,47 @@ SILVIA_BRIDGE.parts.files = function () {
     }
     throw last;
   }
+  /* 1-W45.5: the Blob is taken straight from URL.createObjectURL (no fetch of the blob: URL), every native step
+     has a time limit and a message names the step that failed, so a silent stop cannot happen any more. */
+  function step(label, p, ms) {
+    return new Promise(function (res, rej) {
+      var t = setTimeout(function () { rej(new Error((it() ? 'nessuna risposta: ' : 'no answer: ') + label)); }, ms);
+      Promise.resolve(p).then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(new Error(label + ': ' + (e && (e.message || e)))); });
+    });
+  }
   async function deliver(href, name) {
-    if (busy) return; busy = true;
+    if (busy) { toast(it() ? 'Salvataggio già in corso…' : 'Saving already in progress…'); return; }
+    busy = true;
     name = clean(name);
-    var saved = null, err = null;
+    toast(it() ? 'Salvataggio di ' + name + '…' : 'Saving ' + name + '…');
+    var saved = null, err = null, data, w;
     try {
-      var data = await b64(await (await fetch(href)).blob());
-      try { saved = await saveDocs(name, data); toast((it() ? 'Salvato in Documenti/SILVIA-BC/' : 'Saved in Documents/SILVIA-BC/') + saved); }
+      var blob = BLOBS[href];
+      if (!blob) blob = await step(it() ? 'lettura del file' : 'reading the file', fetch(href).then(function (r) { return r.blob(); }), 8000);
+      data = await step(it() ? 'conversione' : 'conversion', b64(blob), 8000);
+      try { saved = await step(it() ? 'scrittura in Documenti' : 'writing to Documents', saveDocs(name, data), 15000); }
       catch (e) { err = e; }
-      try {
-        var w = await FS.writeFile({ path: name, data: data, directory: 'CACHE' });
-        await SH.share({ title: name, files: [w.uri], dialogTitle: name });
-      } catch (e) {
-        if (!saved && !/cancel/i.test(String(e && (e.message || e)))) throw (err || e);
-      }
+      try { w = await step(it() ? 'file temporaneo' : 'temporary file', FS.writeFile({ path: name, data: data, directory: 'CACHE' }), 15000); }
+      catch (e) { if (!saved) throw (err || e); }
+      if (saved) toast((it() ? 'Salvato in Documenti/SILVIA-BC/' : 'Saved in Documents/SILVIA-BC/') + saved);
+      else if (err) toast((it() ? 'Non salvato in Documenti (' : 'Not saved in Documents (') + err.message + (it() ? '): scegli dove salvarlo nella condivisione' : '): choose where to save it in the share sheet'), true);
     } catch (e) {
       var m = String(e && (e.message || e));
       toast((it() ? 'File non salvato: ' : 'File not saved: ') + m, true);
-      try { alert((it() ? 'File non salvato' : 'File not saved') + ' (' + name + '): ' + m); } catch (x) {}
-    } finally { busy = false; }
+      try { alert((it() ? 'File non salvato' : 'File not saved') + ' (' + name + ')\n' + m + (err && err.message !== m ? '\n' + err.message : '')); } catch (x) {}
+      busy = false; return;
+    }
+    busy = false;
+    if (w && w.uri) {
+      try { await SH.share({ title: name, files: [w.uri], dialogTitle: name }); }
+      catch (e) {
+        var m2 = String(e && (e.message || e));
+        if (!/cancel/i.test(m2)) {
+          if (saved) toast((it() ? 'Salvato in Documenti/SILVIA-BC/' : 'Saved in Documents/SILVIA-BC/') + saved + (it() ? ' · condivisione non riuscita' : ' · sharing failed'));
+          else { toast((it() ? 'Condivisione non riuscita: ' : 'Sharing failed: ') + m2, true); try { alert((it() ? 'File non salvato' : 'File not saved') + ' (' + name + ')\n' + m2 + (err ? '\n' + err.message : '')); } catch (x) {} }
+        }
+      }
+    }
   }
   function grab(a) {
     var h = a && a.getAttribute && a.getAttribute('href') || '';
