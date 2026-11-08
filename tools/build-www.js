@@ -21,6 +21,8 @@ h = h.replace('</head>', '<meta name="viewport" content="width=device-width,init
 const bridge = fs.readFileSync(R('src/android-bridge.js'), 'utf8');
 const k = h.lastIndexOf('</body>');
 if (k < 0) throw new Error('</body> not found');
-h = h.slice(0, k) + '<script>\n' + bridge + '\n</script>\n' + h.slice(k);
+const pkg = JSON.parse(fs.readFileSync(R('package.json'), 'utf8'));
+const app = { name: pkg.versionName || pkg.release || pkg.version, code: pkg.androidVersionCode || null };
+h = h.slice(0, k) + '<script>window.SILVIA_APP=' + JSON.stringify(app) + ';</script>\n<script>\n' + bridge + '\n</script>\n' + h.slice(k);
 fs.writeFileSync(R('www/index.html'), h);
 console.log('www/index.html', (h.length / 1024).toFixed(0), 'KB');

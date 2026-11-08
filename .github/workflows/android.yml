@@ -85,6 +85,9 @@ jobs:
           unzip -p "$A" assets/capacitor.plugins.json
           "$AAPT" dump permissions "$A" | grep -q "android.permission.CAMERA"
           unzip -p "$A" assets/public/index.html | grep -q "SILVIA_OCR"
+          unzip -p "$A" assets/public/index.html | grep -q "SILVIA_BRIDGE"
+          unzip -p "$A" assets/public/index.html | grep -q "SILVIA_APP="
+          "$AAPT" dump badging "$A" | grep -o "versionCode=[^ ]* versionName=[^ ]*"
           echo "APK OK"
 
       - uses: actions/upload-artifact@v4

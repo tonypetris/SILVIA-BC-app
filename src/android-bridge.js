@@ -1,10 +1,12 @@
+/* Robust start (1-W45 build 2): every part runs in its own try/catch and the start is retried until
+   window.Capacitor is ready (DOMContentLoaded, load, timers up to 10 s), so one failure cannot hide the others. */
+var SILVIA_BRIDGE = { parts: {}, errors: [] };
 /* S.I.L.V.I.A. + B + C – Android bridge.
    In the Android WebView a link with "download" does nothing: every file the program
    produces (project .json, PDF report, XLS) is written to the app cache and handed to
    the Android share sheet (Drive, e-mail, WhatsApp, Files/Download…). */
-(function () {
+SILVIA_BRIDGE.parts.files = function () {
   var C = window.Capacitor;
-  if (!C || !C.isNativePlatform || !C.isNativePlatform()) return;
   var FS = C.registerPlugin('Filesystem'), SH = C.registerPlugin('Share');
   var busy = false;
   function b64(blob) {
@@ -43,14 +45,13 @@
     var a = e.target && e.target.closest && e.target.closest('a[download]');
     if (a && grab(a)) e.preventDefault();
   }, true);
-})();
+};
 
 /* Screen rotation: a small button cycles Auto → Landscape → Portrait.
    "Auto" follows the device's own rotation setting; the other two lock the app
    in that orientation even when auto-rotate is off on the phone or tablet. */
-(function () {
+SILVIA_BRIDGE.parts.rotate = function () {
   var C = window.Capacitor;
-  if (!C || !C.isNativePlatform || !C.isNativePlatform()) return;
   var SO = C.registerPlugin('ScreenOrientation');
   var modes = ['auto', 'landscape', 'portrait'], i = 0;
   var L = {
@@ -60,12 +61,12 @@
   function lang() { return (window.S && S.lang === 'en') ? 'en' : 'it'; }
   var css = document.createElement('style');
   css.textContent =
-    '#rotBtn{position:fixed;left:calc(12px + env(safe-area-inset-left));bottom:calc(12px + env(safe-area-inset-bottom));z-index:9999;' +
+    '#rotBtn{position:fixed;left:calc(12px + env(safe-area-inset-left));bottom:calc(max(env(safe-area-inset-bottom), 16px) + 18px);z-index:9999;' +
     'width:46px;height:46px;border-radius:50%;border:2px solid #fff;background:#002841;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.35);' +
     'display:flex;align-items:center;justify-content:center;opacity:.88;padding:0}' +
     '#rotBtn svg{width:24px;height:24px}#rotBtn .m{position:absolute;right:-4px;top:-4px;background:#cc4400;color:#fff;border-radius:9px;' +
     'font:700 10px/16px system-ui,sans-serif;min-width:16px;padding:0 3px;border:1px solid #fff}' +
-    '#rotTip{position:fixed;left:calc(66px + env(safe-area-inset-left));bottom:calc(20px + env(safe-area-inset-bottom));z-index:9999;' +
+    '#rotTip{position:fixed;left:calc(66px + env(safe-area-inset-left));bottom:calc(max(env(safe-area-inset-bottom), 16px) + 26px);z-index:9999;' +
     'background:#002841;color:#fff;font:600 13px system-ui,sans-serif;padding:7px 11px;border-radius:8px;opacity:0;transition:opacity .25s;pointer-events:none}' +
     '@media print{#rotBtn,#rotTip{display:none}}';
   document.head.appendChild(css);
@@ -92,13 +93,50 @@
   });
   function add() { document.body.appendChild(b); document.body.appendChild(tip); show(); }
   if (document.body) add(); else document.addEventListener('DOMContentLoaded', add);
-})();
+};
 
 /* Camera code reading: ML Kit text recognition (on-device, offline) through the local SilviaOcr plugin.
    The program shows the camera button only when window.SILVIA_OCR exists. */
-(function () {
+SILVIA_BRIDGE.parts.ocr = function () {
   var C = window.Capacitor;
-  if (!C || !C.isNativePlatform || !C.isNativePlatform()) return;
-  var OCR = C.registerPlugin('SilviaOcr');
+  var OCR = (C.Plugins && C.Plugins.SilviaOcr) || C.registerPlugin('SilviaOcr');
   window.SILVIA_OCR = function (dataUrl) { return OCR.recognize({ image: dataUrl }); };
+  try { window.dispatchEvent(new Event('silvia-ocr-ready')); } catch (e) {}
+};
+
+/* build number and status in the page footer, so the user sees which app is installed */
+SILVIA_BRIDGE.parts.info = function () {
+  var A = window.SILVIA_APP || {};
+  function put() {
+    var it = !(window.S && S.lang === 'en'), f = document.getElementById('silviaAppInfo');
+    if (!f) { f = document.createElement('div'); f.id = 'silviaAppInfo';
+      f.style.cssText = 'text-align:center;font:600 12px system-ui,sans-serif;color:#667;padding:6px 8px 80px';
+      document.body.appendChild(f); }
+    var ok = typeof window.SILVIA_OCR === 'function';
+    f.textContent = (it ? 'App Android' : 'Android app') + ' · v' + (A.name || '?') + ' · build ' + (A.code || '?') +
+      ' · ' + (it ? 'fotocamera ' : 'camera ') + (ok ? '✓' : '✕') +
+      (SILVIA_BRIDGE.errors.length ? ' · ' + SILVIA_BRIDGE.errors.join('; ') : '');
+  }
+  put(); window.addEventListener('silvia-ocr-ready', put); setTimeout(put, 1500);
+};
+(function () {
+  var done = false, tries = 0;
+  function native() {
+    var C = window.Capacitor;
+    if (!C) return false;
+    try { if (C.isNativePlatform && C.isNativePlatform()) return true; } catch (e) {}
+    try { return !!(C.getPlatform && C.getPlatform() === 'android'); } catch (e) { return false; }
+  }
+  function start() {
+    if (done) return;
+    if (!native() || !document.body) { if (++tries < 40) setTimeout(start, 250); return; }
+    done = true;
+    ['files', 'rotate', 'ocr', 'info'].forEach(function (k) {
+      try { SILVIA_BRIDGE.parts[k](); } catch (e) { SILVIA_BRIDGE.errors.push(k + ': ' + (e && e.message || e)); }
+    });
+    if (SILVIA_BRIDGE.errors.length) try { SILVIA_BRIDGE.parts.info(); } catch (e) {}
+  }
+  start();
+  document.addEventListener('DOMContentLoaded', start);
+  window.addEventListener('load', start);
 })();

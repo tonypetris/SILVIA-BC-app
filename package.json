@@ -2,7 +2,7 @@
   "name": "silvia-bc-app",
   "version": "1.45.0",
   "private": true,
-  "description": "S.I.L.V.I.A. + B + C – app Android (Capacitor)",
+  "description": "S.I.L.V.I.A. + B + C \u2013 app Android (Capacitor)",
   "scripts": {
     "build:www": "node tools/build-www.js",
     "android:prepare": "node tools/prepare-android.js"
@@ -20,6 +20,7 @@
     "jspdf": "2.5.1",
     "xlsx": "0.18.5"
   },
-  "androidVersionCode": 1450001,
-  "release": "1-W45"
+  "androidVersionCode": 1450002,
+  "release": "1-W45",
+  "versionName": "1-W45.2"
 }

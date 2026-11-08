@@ -10,7 +10,7 @@ if (!m) throw new Error('unexpected version ' + v);
 const code = pkg.androidVersionCode || ((+m[1]) * 1000000 + (+m[2]) * 10000 + (+m[3]) * 100 + (m[4] ? +m[4] : 99));
 const g = R('android/app/build.gradle');
 let s = fs.readFileSync(g, 'utf8');
-const vn = pkg.release || v;                             // release name shown on the phone, e.g. 1-W45
+const vn = pkg.versionName || pkg.release || v;     // e.g. 1-W45.2 (the release tag stays pkg.release)                             // release name shown on the phone, e.g. 1-W45
 s = s.replace(/versionCode \d+/, 'versionCode ' + code).replace(/versionName "[^"]*"/, 'versionName "' + vn + '"');
 if (!s.includes('signingConfigs')) {
   s = s.replace(/buildTypes \{/, `signingConfigs {
