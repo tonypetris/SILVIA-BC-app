@@ -81,7 +81,7 @@ jobs:
           unzip -l "$A" | grep -E "assets/public/(index.html|libs/)"
           unzip -p "$A" assets/public/index.html | grep -q "libs/jspdf.umd.min.js"
           unzip -p "$A" assets/public/index.html | grep -q "libs/xlsx.full.min.js"
-          unzip -p "$A" assets/public/index.html | grep -q "registerPlugin('Share')"
+          unzip -p "$A" assets/public/index.html | grep -q "SILVIA_CALL('Share'"
           unzip -p "$A" assets/capacitor.plugins.json
           "$AAPT" dump permissions "$A" | grep -q "android.permission.CAMERA"
           unzip -p "$A" assets/public/index.html | grep -q "SILVIA_OCR"
