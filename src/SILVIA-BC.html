@@ -292,8 +292,8 @@ function loadProject(o){if(!o||!Array.isArray(o.devs)||!o.devs.length||!o.devs.e
   fitDevs();S.demo=false;S.open=false;S.wiz={step:1,role:'head'};S.msg=T('prjOk');render();return true}
 async function saveProject(){if(!S.devs.length)return;const now=new Date(),pad=n=>String(n).padStart(2,'0'),head=S.devs.find(d=>d.parent==null),nm=String(head&&(head.name||nameOf(head))||'impianto').replace(/[^A-Za-z0-9._-]+/g,'_').slice(0,40);
   const fn=`SILVIA-BC_${nm}_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.json`,blob=new Blob([JSON.stringify(snapshot(),null,1)],{type:'application/json'});
-  let dl=null;try{dl=window.claude&&await window.claude.use('downloads')}catch(e){}
-  try{if(dl)await dl.save({filename:fn,data:blob});else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}S.msg=T('prjSaved');if(!S.open)draw(0)}catch(e){}}
+  
+  try{await SAVEF(fn,blob);S.msg=T('prjSaved');if(!S.open)draw(0)}catch(e){}}
 $('#bSave').onclick=saveProject;$('#bOpen').onclick=()=>$('#fP').click();
 $('#fP').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const r=new FileReader();r.onload=async ev=>{let o=null;try{o=JSON.parse(ev.target.result)}catch(err){}
   if(S.devs.length&&!await ask(T('prjRepT'),T('prjRepB'),T('prjOpen'),T('dgNo')))return;
@@ -800,8 +800,8 @@ X.utils.book_append_sheet(wb,w1,it?'Dispositivi':'Devices');
 if(r2.length){const w2=X.utils.aoa_to_sheet([H2,...r2]);w2['!cols']=[{wch:60},{wch:12},{wch:12},{wch:12},{wch:16},{wch:10},{wch:30}];X.utils.book_append_sheet(wb,w2,it?'Selettivita':'Selectivity')}
 cXls(X,wb,it);const w3=X.utils.aoa_to_sheet([['S.I.L.V.I.A. + B + C'],['v'+APP.v],[new Date().toLocaleString(it?'it-IT':'en-GB')],['© 2026 Antonio Petris · '+(it?'Tutti i diritti riservati':'All rights reserved')],[it?'Valori indicativi: verificare sul catalogo Hager.':'Indicative values: verify against the Hager catalogue.']]);w3['!cols']=[{wch:60}];X.utils.book_append_sheet(wb,w3,'Info');
 const buf=X.write(wb,{bookType:'xlsx',type:'array'}),blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),fn='SILVIA-BC_settings_'+new Date().toISOString().slice(0,10)+'.xlsx';
-let dl=null;try{dl=window.claude&&await window.claude.use('downloads')}catch(e){}
-if(dl)await dl.save({filename:fn,data:blob});else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+
+await SAVEF(fn,blob);
 }catch(e){if(!(e&&(e.code=='declined'||e.code=='rate_limited'))){S.msg=T('xlsErr');if(!S.open)draw(0)}}finally{btn.disabled=false}}
 async function exportPdf(){const J=window.jspdf&&window.jspdf.jsPDF,btn=$('#bPdf');if(!J||!S.devs.length){S.msg=T('pdfErr');if(!S.open)draw(0);return}
 btn.disabled=true;W=820;H=500;VX0=0;VX1=5;VY0=-3;VY1=4;try{
@@ -832,8 +832,8 @@ y=sec(T('pdfB'),y+6);
 y=tbl(y,[[T('bkDev'),70],[T('bkVer'),30],['Icc (kA)',24],[T('bkOwn'),34],[T('bkUp'),52],[T('bkRes'),67]],ord.map(([d,l])=>{const c=bkChk(d);return['    '.repeat(l)+(d.name||nameOf(d)),devCode(d)||verName(d)||'-',d.icc>0?d.icc:'-',kaF(c.own),par(d)?kaF(c.bk):'-',bkTxt(d)]}),T('pdfB'));
 doc.setFont('helvetica','normal');doc.setFontSize(8);tc('#646464');doc.text(T('pdfBN')+' '+(S.volt=='230'?T('v230'):T('v400'))+'.',M,y);y=cPdf(doc,{y:y+2,sec,tbl,head,PH,PW,M,tc}); await mfAddPages(doc,false);
 const n=doc.getNumberOfPages();for(let k=1;k<=n;k++){doc.setPage(k);if(doc.internal.pageSize.getWidth()>300)continue;dc('#dde2e7');doc.line(M,PH-10,PW-M,PH-10);doc.setFont('helvetica','normal');doc.setFontSize(8);tc('#646464');doc.text('© 2026 Antonio Petris | Tutti i diritti riservati / All rights reserved | v'+APP.v,M,PH-5.5);doc.text(k+' / '+n,PW-M,PH-5.5,{align:'right'})}
-const fn='SILVIA-BC_report_'+now.toISOString().slice(0,10)+'.pdf',blob=doc.output('blob');let dl=null;try{dl=window.claude&&await window.claude.use('downloads')}catch(e){}
-if(dl)await dl.save({filename:fn,data:blob});else doc.save(fn);
+const fn='SILVIA-BC_report_'+now.toISOString().slice(0,10)+'.pdf',blob=doc.output('blob');
+await SAVEF(fn,blob);
 }catch(e){if(!(e&&e.code=='declined')){S.msg=T('pdfErr')+(e&&e.message?' ('+e.message+')':'');if(!S.open)draw(0)}}finally{btn.disabled=!S.devs.length;if(!S.open)drawChart()}}
 
 
@@ -1607,7 +1607,7 @@ function mfPng(svg,pxmm=8){return new Promise((res,rej)=>{const im=new Image(),w
  im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg.replace('<svg ',`<svg width="${w}" height="${h}" `))})}
 async function mfAddPages(doc,first){const L=mfSheets();for(let k=0;k<L.length;k++){if(!(first&&k==0))doc.addPage('a3','landscape');const png=await mfPng(L[k]);doc.addImage(png,'PNG',0,0,420,297,undefined,'FAST')}return L.length}
 async function mfPdf(btn){const J=window.jspdf&&window.jspdf.jsPDF;if(!J)return;btn.disabled=true;const t=btn.textContent;btn.textContent=T('mfWait');try{const doc=new J({orientation:'landscape',unit:'mm',format:'a3'});await mfAddPages(doc,true);
- const fn='SILVIA-BC_multifilare_'+new Date().toISOString().slice(0,10)+'.pdf',blob=doc.output('blob');let dl=null;try{dl=window.claude&&await window.claude.use('downloads')}catch(e){}if(dl)await dl.save({filename:fn,data:blob});else doc.save(fn)}
+ const fn='SILVIA-BC_multifilare_'+new Date().toISOString().slice(0,10)+'.pdf',blob=doc.output('blob');await SAVEF(fn,blob)}
  catch(e){if(!(e&&e.code=='declined'))alert(T('pdfErr'))}finally{btn.disabled=false;btn.textContent=t}}
 // report: the multi-wire sheets are added after the coordination sections (A3 pages, own title block, no report footer)
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#mfB'))mfOpen()});
@@ -2438,8 +2438,8 @@ function svgToDxf(sheets){const out=[],W=430,H=297;const e=(...kv)=>{for(let i=0
   else if(a.t=='TEXT'){const al=a.al?[72,a.al,11,X(a.p[0]),21,Y(a.p[1]),31,0]:[];e(0,'TEXT',8,a.L,62,a.col,10,X(a.p[0]),20,Y(a.p[1]),30,0,40,fx(a.h),1,dxfTxt(a.s),50,fx(a.rot),7,a.b?'BOLD':'STANDARD',...al)}});
  e(0,'ENDSEC',0,'EOF');return out.join('\r\n')+'\r\n'}
 async function mfDxf(btn){const t=btn.textContent;btn.disabled=true;try{const txt=svgToDxf(mfSheets());const by=new Uint8Array(txt.length);for(let i=0;i<txt.length;i++){const c=txt.charCodeAt(i);by[i]=c<256?c:63}
-  const blob=new Blob([by],{type:'application/dxf'}),fn='SILVIA-BC_multifilare_'+new Date().toISOString().slice(0,10)+'.dxf';let dl=null;try{dl=window.claude&&await window.claude.use('downloads')}catch(e){}
-  if(dl)await dl.save({filename:fn,data:blob});else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}}
+  const blob=new Blob([by],{type:'application/dxf'}),fn='SILVIA-BC_multifilare_'+new Date().toISOString().slice(0,10)+'.dxf';
+  await SAVEF(fn,blob);}
  catch(e){if(!(e&&e.code=='declined')){console.error(e);alert(T('pdfErr'))}}finally{btn.disabled=false;btn.textContent=t}}
 {const _o=mfOpen;mfOpen=function(){const r=_o.apply(this,arguments);try{const p=$('#mfPdf');if(p&&!$('#mfDxf')){const b=document.createElement('button');b.id='mfDxf';b.textContent=T('mfDxf');b.title=T('mfDxfT');b.onclick=()=>mfDxf(b);p.after(b)}}catch(e){console.error(e)}return r}}
 
@@ -2885,6 +2885,26 @@ ask=function(title,body,ok,no){return new Promise(res=>{const DQ=actDoc(),WQ=DQ.
   s.textContent=LL('tramite ','via ')+via.map(x=>{let c='';try{c=devCode(x)||''}catch(e){}return c||x.name||nameOf(x)}).join(', ');td.appendChild(s)})
  }catch(e){console.error(e)}return r}}
 {const st=document.createElement('style');st.textContent='#vis .vr.vrNoc .vn{opacity:.75}#vis .vnoc{grid-column:2/4;justify-self:end;font-size:12px;color:var(--mut,#667);font-style:italic;padding:4px 6px;white-space:nowrap}#dash .pvia{display:block;font-size:11px;color:var(--mut,#667);margin:2px 0 0 4px}';document.head.appendChild(st)}
+
+/* 8 Nov evening: one save function for project, report, Excel, multi-wire PDF and DXF.
+   The download capability of the hosting page is asked at start (not at the click, where it could take 10 s),
+   then: host download → share sheet on phones/tablets → normal download; a message always says what happened. */
+let DLCAP=null;const DLP=(async()=>{try{if(window.claude&&typeof window.claude.use=='function')DLCAP=await Promise.race([window.claude.use('downloads'),new Promise(r=>setTimeout(()=>r(null),10000))])}catch(e){DLCAP=null}return DLCAP})();
+function saveToast(msg,bad,blob,fn){let t=document.getElementById('svToast');if(!t){t=document.createElement('div');t.id='svToast';t.setAttribute('role','status');document.body.appendChild(t)}
+ t.className=bad?'bad':'';t.innerHTML='';const s=document.createElement('span');s.textContent=msg;t.appendChild(s);
+ if(blob){const b=document.createElement('button');b.textContent=LL('Non scaricato? Apri il file','Not downloaded? Open the file');b.onclick=()=>{try{const u=URL.createObjectURL(blob);const w=window.open(u,'_blank');if(!w)location.href=u;setTimeout(()=>URL.revokeObjectURL(u),120000)}catch(e){}};t.appendChild(b)}
+ t.style.opacity='1';t.style.pointerEvents='auto';clearTimeout(t._h);t._h=setTimeout(()=>{t.style.opacity='0';t.style.pointerEvents='none'},blob?12000:5000)}
+{const st=document.createElement('style');st.textContent='#svToast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(max(env(safe-area-inset-bottom),16px) + 24px);z-index:100000;max-width:min(92vw,560px);display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:11px 15px;border-radius:12px;background:#12803f;color:#fff;font:600 14px/1.35 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .3s;opacity:0;pointer-events:none}#svToast.bad{background:#b3261e}#svToast button{background:#fff;color:#12803f;border:0;border-radius:8px;padding:6px 10px;font:700 13px system-ui,sans-serif;cursor:pointer}#svToast.bad button{color:#b3261e}@media print{#svToast{display:none}}';document.head.appendChild(st)}
+const isAppNative=()=>{try{const C=window.Capacitor;return !!(C&&(C.isNativePlatform?C.isNativePlatform():C.getPlatform&&C.getPlatform()=='android'))}catch(e){return false}};
+const isTouchDev=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform=='MacIntel'&&navigator.maxTouchPoints>1);
+function anchorSave(fn,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.rel='noopener';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
+async function SAVEF(fn,blob){
+ if(isAppNative()){anchorSave(fn,blob);return}   // Android app: the bridge saves it and shows its own message
+ let dl=DLCAP;if(!dl&&window.claude)dl=await Promise.race([DLP,new Promise(r=>setTimeout(()=>r(null),1500))]);
+ if(dl){try{await dl.save({filename:fn,data:blob});saveToast(LL('File salvato: ','File saved: ')+fn);return}catch(e){if(e&&e.code=='declined')throw e;console.warn('downloads',e)}}
+ if(isTouchDev()&&navigator.canShare&&navigator.share){try{const f=new File([blob],fn,{type:blob.type||'application/octet-stream'});if(navigator.canShare({files:[f]})){await navigator.share({files:[f],title:fn});saveToast(LL('File pronto: ','File ready: ')+fn);return}}catch(e){if(e&&e.name=='AbortError')return;console.warn('share',e)}}
+ try{anchorSave(fn,blob);saveToast(LL('Download avviato: ','Download started: ')+fn,false,isTouchDev()?blob:null,fn)}
+ catch(e){saveToast(LL('File non salvato: ','File not saved: ')+(e&&e.message||e),true,blob,fn)}}
 
 loadData();boot();showIntro();window._glhOff=1;
 let _rz;addEventListener('resize',()=>{clearTimeout(_rz);_rz=setTimeout(()=>{if($('#sld')&&S.devs.length){if(!S.zm)drawSld();if($('#chart'))drawChart()}},120)});

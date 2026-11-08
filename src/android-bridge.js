@@ -5,9 +5,21 @@ var SILVIA_BRIDGE = { parts: {}, errors: [] };
    In the Android WebView a link with "download" does nothing: every file the program
    produces (project .json, PDF report, XLS) is written to the app cache and handed to
    the Android share sheet (Drive, e-mail, WhatsApp, Files/Download…). */
+/* 1-W45.6: plugins are taken from Capacitor.Plugins (filled by the native bridge); registerPlugin exists only when
+   the @capacitor/core JavaScript is loaded, which this app does not do (Pixel 7a: "C.registerPlugin is not a function"). */
+function SILVIA_PLUGIN(name) {
+  var C = window.Capacitor || {};
+  var p = (C.Plugins && C.Plugins[name]) || (typeof C.registerPlugin === 'function' ? C.registerPlugin(name) : null);
+  if (!p) throw new Error('plugin ' + name + ' non disponibile / not available');
+  return p;
+}
+function SILVIA_CALL(name, method) {
+  return function (a) { try { return Promise.resolve(SILVIA_PLUGIN(name)[method](a)); } catch (e) { return Promise.reject(e); } };
+}
 SILVIA_BRIDGE.parts.files = function () {
   var C = window.Capacitor;
-  var FS = C.registerPlugin('Filesystem'), SH = C.registerPlugin('Share');
+  var FS = { writeFile: SILVIA_CALL('Filesystem', 'writeFile'), checkPermissions: SILVIA_CALL('Filesystem', 'checkPermissions'), requestPermissions: SILVIA_CALL('Filesystem', 'requestPermissions') },
+      SH = { share: SILVIA_CALL('Share', 'share') };
   var busy = false;
   var BLOBS = {};
   try {
@@ -114,7 +126,7 @@ SILVIA_BRIDGE.parts.files = function () {
    in that orientation even when auto-rotate is off on the phone or tablet. */
 SILVIA_BRIDGE.parts.rotate = function () {
   var C = window.Capacitor;
-  var SO = C.registerPlugin('ScreenOrientation');
+  var SO = { lock: SILVIA_CALL('ScreenOrientation', 'lock'), unlock: SILVIA_CALL('ScreenOrientation', 'unlock') };
   var modes = ['auto', 'landscape', 'portrait'], i = 0;
   var L = {
     it: { auto: 'Rotazione automatica', landscape: 'Schermo orizzontale', portrait: 'Schermo verticale', t: 'Gira lo schermo' },
@@ -161,7 +173,7 @@ SILVIA_BRIDGE.parts.rotate = function () {
    The program shows the camera button only when window.SILVIA_OCR exists. */
 SILVIA_BRIDGE.parts.ocr = function () {
   var C = window.Capacitor;
-  var OCR = (C.Plugins && C.Plugins.SilviaOcr) || C.registerPlugin('SilviaOcr');
+  var OCR = { recognize: SILVIA_CALL('SilviaOcr', 'recognize') };
   window.SILVIA_OCR = function (dataUrl) { return OCR.recognize({ image: dataUrl }); };
   try { window.dispatchEvent(new Event('silvia-ocr-ready')); } catch (e) {}
 };
