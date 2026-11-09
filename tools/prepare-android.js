@@ -42,11 +42,26 @@ x = x.replace(/<activity\b/, '<activity android:screenOrientation="fullUser" and
 fs.writeFileSync(mf, x);
 console.log('android: rotation enabled (fullUser, configChanges kept)');
 
+// 1-W46: open a project from Android "Share" (Invia/Condividi) and "Open with" (Apri con)
+x = fs.readFileSync(mf, 'utf8');
+if (!x.includes('SILVIA_SHARE_IN')) {
+  if (!/android:launchMode=/.test(x)) x = x.replace(/<activity\b/, '<activity android:launchMode="singleTask"');
+  const types = ['application/json', 'text/plain', 'application/octet-stream', 'text/x-json', 'application/x-json'];
+  const send = '\n            <!-- SILVIA_SHARE_IN -->\n            <intent-filter android:label="SILVIA-BC">\n                <action android:name="android.intent.action.SEND" />\n                <category android:name="android.intent.category.DEFAULT" />\n' +
+    types.map(t => '                <data android:mimeType="' + t + '" />\n').join('') + '            </intent-filter>\n';
+  const view = '            <intent-filter android:label="SILVIA-BC">\n                <action android:name="android.intent.action.VIEW" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <category android:name="android.intent.category.BROWSABLE" />\n                <data android:scheme="content" />\n                <data android:scheme="file" />\n' +
+    types.map(t => '                <data android:mimeType="' + t + '" />\n').join('') + '            </intent-filter>\n        ';
+  x = x.replace(/<\/activity>/, send + view + '</activity>');
+  fs.writeFileSync(mf, x);
+  console.log('android: Share / Open with filters added');
+}
+
 // camera code reading: local Capacitor plugin with ML Kit text recognition (bundled Latin model, offline)
 {
   const cfg = JSON.parse(fs.readFileSync(R('capacitor.config.json'), 'utf8'));
   const dir = R('android/app/src/main/java/' + cfg.appId.split('.').join('/'));
   fs.copyFileSync(R('tools/native/SilviaOcrPlugin.java'), path.join(dir, 'SilviaOcrPlugin.java'));
+  fs.copyFileSync(R('tools/native/SilviaFilesPlugin.java'), path.join(dir, 'SilviaFilesPlugin.java'));
   const ma = path.join(dir, 'MainActivity.java');
   fs.writeFileSync(ma, `package ${cfg.appId};
 
@@ -57,6 +72,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(SilviaOcrPlugin.class);
+        registerPlugin(SilviaFilesPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }
