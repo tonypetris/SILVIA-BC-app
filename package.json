@@ -1,6 +1,6 @@
 {
   "name": "silvia-bc-app",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "private": true,
   "description": "S.I.L.V.I.A. + B + C \u2013 app Android (Capacitor)",
   "scripts": {
@@ -20,7 +20,7 @@
     "jspdf": "2.5.1",
     "xlsx": "0.18.5"
   },
-  "androidVersionCode": 2000000,
-  "release": "2.0.0",
-  "versionName": "2.0.0"
+  "androidVersionCode": 2000001,
+  "release": "2.0.1",
+  "versionName": "2.0.1"
 }
