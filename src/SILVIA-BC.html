@@ -4280,7 +4280,7 @@ optIssues=function(){let L=_oi.apply(this,arguments);try{const have=new Set(L.ma
 function flowHTML(){const I=(()=>{try{return optIssues()}catch(e){return[]}})();const cnt={};I.forEach(x=>{if(x.skipped)return;cnt[x._ph]=(cnt[x._ph]||0)+1});
  const st=k=>{if(k=='src')return S.src?(cnt.src?'wa':'ok'):'todo';if(k=='sch')return S.devs.length?'ok':'todo';if(k=='rep')return Object.values(cnt).some(v=>v>0)?'todo':'ok';return cnt[k]?'wa':'ok'};
  return `<div class="v22f"><b>${LL('Progetto','Project')}</b>`+PH.map((p,n)=>{const s=st(p.k);return `<button type="button" class="v22p ${s}" data-ph="${p.k}" title="${s=='wa'?cnt[p.k]+' '+LL('punti da verificare','points to check'):s=='ok'?LL('fatto','done'):LL('da fare','to do')}"><span class="v22n">${s=='ok'?'✓':n+1}</span>${LL(p.it,p.en)}${s=='wa'?` <span class="v22c">${cnt[p.k]}</span>`:''}</button>`}).join('<span class="v22a">›</span>')+`</div>`}
-function drawFlow(){try{const ws=document.getElementById('app');if(!ws||!ws.querySelector('.wspb'))return;let f=document.getElementById('v22flow');if(!f){f=document.createElement('div');f.id='v22flow'}if(f.parentElement!==ws||ws.firstElementChild!==f)ws.prepend(f);f.innerHTML=flowHTML();orderSections();
+function drawFlow(){try{const ws=document.getElementById('app');if(!ws||!ws.querySelector('.wsp'))return;let f=document.getElementById('v22flow');if(!f){f=document.createElement('div');f.id='v22flow'}if(f.parentElement!==ws||ws.firstElementChild!==f)ws.prepend(f);f.innerHTML=flowHTML();if(ws.querySelector('.wspb'))orderSections();
  f.querySelectorAll('[data-ph]').forEach(b=>b.onclick=()=>{const k=b.dataset.ph;if(k=='src'){try{srcDlg()}catch(e){}return}if(k=='rep'){const x=[...document.querySelectorAll('button')].find(y=>/Scarica PDF|Download PDF/.test(y.textContent));x&&x.click();return}
   const sec=document.querySelector(`[data-v22="${k}"]`);if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});else if(k=='sch'||k=='load'){const g=document.querySelector('#app .sldc');g&&g.scrollIntoView({behavior:'smooth',block:'start'})}const I=optIssues().filter(x=>x._ph==k&&!x.skipped);if(I.length)setTimeout(()=>optRun(I[0].key),450);else{try{S.msg=LL('Fase verificata: niente da correggere','Phase checked: nothing to fix');draw(0)}catch(e){}}})}catch(e){console.error(e)}}
 // sections of the page in the order of the design flow, top to bottom, with arrows between them
@@ -4311,8 +4311,11 @@ function apply(anim){const w=wsp();if(!w)return;const on=!!S.v22b;const was=w.cl
  clearTimeout(tmr);const from=getComputedStyle(w).gridTemplateColumns;
  if(on){w.style.transition='none';w.style.gridTemplateColumns=from;void w.offsetWidth;w.classList.add('v22bm');w.style.transition=anim?'grid-template-columns .55s cubic-bezier(.3,.7,.2,1)':'none';w.style.gridTemplateColumns=cols(w,true);tmr=setTimeout(()=>{w.style.transition='';fitSld()},anim?600:0)}
  else{w.style.transition='none';w.classList.remove('v22bm');w.style.gridTemplateColumns='';const to=getComputedStyle(w).gridTemplateColumns;w.classList.add('v22bm','v22out');w.style.gridTemplateColumns=from;void w.offsetWidth;
-  w.style.transition=anim?'grid-template-columns .55s cubic-bezier(.3,.7,.2,1)':'none';w.style.gridTemplateColumns=to;tmr=setTimeout(()=>{w.classList.remove('v22bm','v22out');w.style.transition='';w.style.gridTemplateColumns='';try{draw(1)}catch(e){}},anim?600:0)}}
+  w.style.transition=anim?'grid-template-columns .55s cubic-bezier(.3,.7,.2,1)':'none';w.style.gridTemplateColumns=to;tmr=setTimeout(()=>{w.classList.remove('v22bm','v22out');w.style.transition='';w.style.gridTemplateColumns='';try{if(!sideOn())render();else draw(1)}catch(e){}},anim?600:0)}}
 addEventListener('resize',()=>{const w=wsp();if(w&&S.v22b)w.style.gridTemplateColumns=cols(w,true)});
+const canBuild=()=>innerWidth>=1000&&!(typeof popOn=='function'&&popOn('sld'));
+{const _so=sideOn;sideOn=function(){if(S.v22b&&canBuild())return true;return _so()}}
+const ensureSide=()=>{if(S.v22b&&!document.querySelector('#app .wsp.side')){try{render()}catch(e){}}};
 // cascade state: mode 'add' (downstream of the selected breaker) or 'rep' (replace a breaker, values prefilled)
 let C=null;
 const GRP=[['ACB',['ACB']],['MCCB',['MCCB']],['MOD',['MCB','RCBO','RCD']],['SW',['SW']]];
@@ -4320,7 +4323,7 @@ const gOf=k=>(GRP.find(g=>g[1].includes(k))||[])[0]||null;
 const gLab=g=>({ACB:'ACB',MCCB:'MCCB',MOD:L2('Modulari (MCB)','Modular (MCB)'),SW:L2('Sezionatori','Switches')})[g];
 const mLab=k=>({MCB:L2('Magnetotermico','MCB'),RCBO:L2('Magnetotermico differenziale','RCBO'),RCD:L2('Differenziale puro','RCCB')})[k]||k;
 function ctxW(){if(C&&C.mode=='rep'){if(S.devs[C.idx])return C;C=null}const P=cur();if(!P)return null;if(!C||C.parent!==P.id)C={mode:'add',role:'down',step:3,parent:P.id,grp:null,kind:null,frame:null,In:null,trip:null,poles:null,ver:null};return C}
-function startRep(i,focus){const d=S.devs[i];if(!d)return;S.sel=i;C={mode:'rep',role:'edit',step:3,idx:i,grp:gOf(d.kind),kind:d.kind,frame:d.frame,In:d.In,trip:d.trip,poles:d.poles,ver:d.ver,_focus:!!focus};if(!S.v22b){S.v22b=true;apply(true)}draw(1)}
+function startRep(i,focus){const d=S.devs[i];if(!d)return;if(!canBuild())return false;S.sel=i;C={mode:'rep',role:'edit',step:3,idx:i,grp:gOf(d.kind),kind:d.kind,frame:d.frame,In:d.In,trip:d.trip,poles:d.poles,ver:d.ver,_focus:!!focus};if(!S.v22b){S.v22b=true;ensureSide();apply(true)}draw(1);return true}
 function withW(w,fn){const sv=S.wiz;S.wiz=w;try{return fn()}catch(e){console.error(e);return null}finally{S.wiz=sv}}
 // coordination of the levels: downstream never «bigger» than upstream (ACB → MCCB → modular) and In ≤ In upstream; when replacing, also not smaller than what is downstream
 const RK={ACB:4,MCCB:3,MCB:2,RCBO:2,RCD:2};
@@ -4364,12 +4367,12 @@ function panel(){const fp=document.querySelector('#app .wsp.side .fpc');if(!fp)r
    S.devs[w.idx]=d;S.sel=w.idx;S.msg=L2(`Sostituito con ${d.kind} ${d.In} A`,`Replaced with ${d.kind} ${d.In} A`);C=null;draw(1);return}
   d.id=++S.nid;d.parent=P.id;d.icc=(kids(P)[0]||P).icc??P.icc;S.devs.push(d);S.msg=L2(`Aggiunto ${d.kind} ${d.In} A a valle di ${P.name||nameOf(P)}`,`Added ${d.kind} ${d.In} A downstream of ${P.name||nameOf(P)}`);draw(1)}}
 // context menu and buttons: replace / add go to the side menu (the big wizard stays only for the first head breaker)
-{const _ca=ctxAct;ctxAct=function(a,i){try{if(S.devs.length&&S.devs[i]){if(a=='rep'||a=='edit'||a=='repC'){startRep(i,a=='repC');return}
-  if(a=='add'){S.sel=i;C=null;if(!S.v22b){S.v22b=true;apply(true)}draw(1);return}
-  if(a=='sib'){const p=par(S.devs[i]);if(p){S.sel=S.devs.indexOf(p);C=null;if(!S.v22b){S.v22b=true;apply(true)}draw(1);return}}}}catch(e){console.error(e)}return _ca.apply(this,arguments)}}
-function sldBtn(){const sc=document.querySelector('#app .wsp.side .sldc .stop');if(!sc)return;let b=sc.querySelector('.v22open');if(S.v22b){if(b)b.remove();return}
- if(!b){b=document.createElement('button');b.type='button';b.className='v22open';b.textContent='⤢ '+L2('Apri a tutto schermo','Open full width');const h=sc.querySelector('h2');h?h.after(b):sc.prepend(b);b.onclick=()=>{S.v22b=true;C=null;apply(true);panel();sldBtn()}}}
-{const _r=render;render=function(){const r=_r.apply(this,arguments);try{if(S.v22b===undefined&&S.devs.length===1&&!S.open)S.v22b=true;apply(false);panel();sldBtn()}catch(e){console.error(e)}return r}}
+{const _ca=ctxAct;ctxAct=function(a,i){try{if(S.devs.length&&S.devs[i]){if((a=='rep'||a=='edit'||a=='repC')&&canBuild()){startRep(i,a=='repC');return}
+  if(a=='add'&&canBuild()){S.sel=i;C=null;if(!S.v22b){S.v22b=true;ensureSide();apply(true)}draw(1);return}
+  if(a=='sib'&&canBuild()){const p=par(S.devs[i]);if(p){S.sel=S.devs.indexOf(p);C=null;if(!S.v22b){S.v22b=true;ensureSide();apply(true)}draw(1);return}}}}catch(e){console.error(e)}return _ca.apply(this,arguments)}}
+function sldBtn(){const sc=document.querySelector('#app .wsp .sldc .stop');if(!sc)return;let b=sc.querySelector('.v22open');if(S.v22b||!canBuild()){if(b)b.remove();return}
+ if(!b){b=document.createElement('button');b.type='button';b.className='v22open';b.textContent='⤢ '+L2('Apri a tutto schermo','Open full width');const h=sc.querySelector('h2');h?h.after(b):sc.prepend(b);b.onclick=()=>{if(!canBuild())return;S.v22b=true;C=null;ensureSide();apply(true);panel();sldBtn()}}}
+{const _r=render;render=function(){const r=_r.apply(this,arguments);try{if(S.v22b===undefined&&S.devs.length===1&&!S.open&&canBuild()){S.v22b=true;if(!document.querySelector('#app .wsp.side')){_r.apply(this,arguments)}}apply(false);panel();sldBtn()}catch(e){console.error(e)}return r}}
 {const _d=draw;draw=function(full){const r=_d.apply(this,arguments);try{apply(false);panel();sldBtn()}catch(e){console.error(e)}return r}}
 {const _lp=loadProject;loadProject=function(o){S.v22b=false;C=null;return _lp.apply(this,arguments)}}
 const st=document.createElement('style');st.textContent=`.wsp.side.v22bm:not(.v22out)>.grid{display:block!important}.wsp.side.v22bm:not(.v22out)>.grid>.mid{display:none!important}.wsp.side.v22bm:not(.v22out) .fpc>*:not(.v22cas){display:none!important}

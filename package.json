@@ -20,7 +20,7 @@
     "jspdf": "2.5.1",
     "xlsx": "0.18.5"
   },
-  "androidVersionCode": 3000000,
+  "androidVersionCode": 3000001,
   "release": "3.0.0",
   "versionName": "3.0.0"
 }
