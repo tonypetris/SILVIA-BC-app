@@ -1,8 +1,8 @@
 {
   "name": "silvia-bc-app",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "private": true,
-  "description": "S.I.L.V.I.A. + B + C \u2013 app Android (Capacitor)",
+  "description": "S.I.L.V.I.A. + B + C – app Android (Capacitor)",
   "scripts": {
     "build:www": "node tools/build-www.js",
     "android:prepare": "node tools/prepare-android.js"
@@ -20,7 +20,7 @@
     "jspdf": "2.5.1",
     "xlsx": "0.18.5"
   },
-  "androidVersionCode": 2000001,
-  "release": "2.0.1",
-  "versionName": "2.0.1"
+  "androidVersionCode": 3000000,
+  "release": "3.0.0",
+  "versionName": "3.0.0"
 }
