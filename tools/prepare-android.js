@@ -60,8 +60,9 @@ if (!x.includes('SILVIA_SHARE_IN')) {
 {
   const cfg = JSON.parse(fs.readFileSync(R('capacitor.config.json'), 'utf8'));
   const dir = R('android/app/src/main/java/' + cfg.appId.split('.').join('/'));
-  fs.copyFileSync(R('tools/native/SilviaOcrPlugin.java'), path.join(dir, 'SilviaOcrPlugin.java'));
-  fs.copyFileSync(R('tools/native/SilviaFilesPlugin.java'), path.join(dir, 'SilviaFilesPlugin.java'));
+  // the plugins take the package of the app (the beta app has its own id: io.github.tonypetris.silviabc.beta)
+  for (const f of ['SilviaOcrPlugin.java', 'SilviaFilesPlugin.java'])
+    fs.writeFileSync(path.join(dir, f), fs.readFileSync(R('tools/native/' + f), 'utf8').replace(/^package [\w.]+;/m, 'package ' + cfg.appId + ';'));
   const ma = path.join(dir, 'MainActivity.java');
   fs.writeFileSync(ma, `package ${cfg.appId};
 
