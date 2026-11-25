@@ -11,6 +11,9 @@ Funziona **offline**: librerie PDF/XLS incluse nell'app, nessun dato salvato aut
 Salva progetto, report PDF e XLS aprono il menu **Condividi** di Android (Drive, e-mail, WhatsApp, File → Download…).
 Apri progetto usa il selettore file di Android.
 
+## App beta
+Dalla 4.0.0 ogni release contiene anche `SILVIA-BC_<versione>_BETA.apk`: è la versione beta (lettura degli schemi unifilari da PDF, da usare con cautela). Ha un identificativo proprio (`io.github.tonypetris.silviabc.beta`, nome «SILVIA B+C Beta») e si installa accanto all'app normale. Sorgente: `src/SILVIA-BC_BETA.html`.
+
 ## Come si aggiorna
 - `src/SILVIA-BC.html` è il programma desktop (cartella `1_Programma_Program` del pacchetto): sostituiscilo con la nuova versione.
 - Numerazione delle release: `<versione>-W<settimana>` (es. `1-W45` = versione 1, settimana 45). In `package.json` aggiorna `"release"` (es. `1-W46`), `"version"` tecnico (es. `1.46.0`) e `"androidVersionCode"` (es. `1460000`: deve crescere sempre, altrimenti Android non installa l'aggiornamento).
@@ -26,6 +29,7 @@ Conserva il keystore in un posto sicuro: senza lo stesso keystore non si possono
 | Percorso | Contenuto |
 |---|---|
 | `src/SILVIA-BC.html` | programma (file unico) |
+| `src/SILVIA-BC_BETA.html` | programma beta (app beta) |
 | `src/android-bridge.js` | salvataggio dei file tramite Condividi di Android |
 | `tools/build-www.js` | crea `www/` con librerie locali e bridge |
 | `tools/prepare-android.js` | versione dell'app e firma di release |

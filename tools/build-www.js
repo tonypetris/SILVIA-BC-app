@@ -1,4 +1,4 @@
-// Builds www/ for the Android app from src/SILVIA-BC.html (the desktop program):
+// Builds www/ for the Android app from src/SILVIA-BC.html (the desktop program) or, with SILVIA_SRC, from another file (beta app: src/SILVIA-BC_BETA.html):
 // PDF/XLS libraries served locally (offline), Google font link removed (system font offline), Android bridge added.
 const fs = require('fs'), path = require('path');
 const R = p => path.join(__dirname, '..', p);
@@ -8,7 +8,9 @@ const libs = {
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js': 'node_modules/jspdf/dist/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js': 'node_modules/xlsx/dist/xlsx.full.min.js'
 };
-let h = fs.readFileSync(R('src/SILVIA-BC.html'), 'utf8');
+const SRC = process.env.SILVIA_SRC || 'src/SILVIA-BC.html';
+let h = fs.readFileSync(R(SRC), 'utf8');
+console.log('source', SRC);
 for (const [url, file] of Object.entries(libs)) {
   if (!h.includes(url)) throw new Error('library URL not found in the program: ' + url);
   const name = path.basename(file);
@@ -22,7 +24,7 @@ const bridge = fs.readFileSync(R('src/android-bridge.js'), 'utf8');
 const k = h.lastIndexOf('</body>');
 if (k < 0) throw new Error('</body> not found');
 const pkg = JSON.parse(fs.readFileSync(R('package.json'), 'utf8'));
-const app = { name: pkg.versionName || pkg.release || pkg.version, code: pkg.androidVersionCode || null };
+const app = { name: (pkg.versionName || pkg.release || pkg.version) + (process.env.SILVIA_BETA ? ' beta' : ''), code: pkg.androidVersionCode || null, beta: !!process.env.SILVIA_BETA };
 h = h.slice(0, k) + '<script>window.SILVIA_APP=' + JSON.stringify(app) + ';</script>\n<script>\n' + bridge + '\n</script>\n' + h.slice(k);
 fs.writeFileSync(R('www/index.html'), h);
 console.log('www/index.html', (h.length / 1024).toFixed(0), 'KB');

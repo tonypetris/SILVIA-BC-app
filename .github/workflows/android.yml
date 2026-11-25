@@ -12,6 +12,16 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    # 4.0.0: two apps from the same commit: the released program and the beta (own package id, installs next to it)
+    strategy:
+      max-parallel: 1
+      fail-fast: true
+      matrix:
+        variant: [main, beta]
+    env:
+      SILVIA_SRC: ${{ matrix.variant == 'beta' && 'src/SILVIA-BC_BETA.html' || 'src/SILVIA-BC.html' }}
+      SILVIA_BETA: ${{ matrix.variant == 'beta' && '1' || '' }}
+      SFX: ${{ matrix.variant == 'beta' && '_BETA' || '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,6 +42,12 @@ jobs:
 
       - name: Build web content (offline libraries, Android bridge)
         run: npm run build:www
+
+      - name: Beta app identity (package id and name)
+        if: matrix.variant == 'beta'
+        run: |
+          node -e "const f='capacitor.config.json',fs=require('fs'),c=JSON.parse(fs.readFileSync(f));c.appId+='.beta';c.appName+=' Beta';fs.writeFileSync(f,JSON.stringify(c,null,2))"
+          cat capacitor.config.json
 
       - name: Create Android project
         run: |
@@ -66,10 +82,10 @@ jobs:
           V=$(node -p "const p=require('../package.json');p.release||p.version")
           if [ "${{ steps.key.outputs.signed }}" = "yes" ]; then
             ./gradlew --no-daemon assembleRelease
-            cp app/build/outputs/apk/release/app-release.apk "../SILVIA-BC_${V}.apk"
+            cp app/build/outputs/apk/release/app-release.apk "../SILVIA-BC_${V}${SFX}.apk"
           else
             ./gradlew --no-daemon assembleDebug
-            cp app/build/outputs/apk/debug/app-debug.apk "../SILVIA-BC_${V}_debug.apk"
+            cp app/build/outputs/apk/debug/app-debug.apk "../SILVIA-BC_${V}${SFX}_debug.apk"
           fi
           ls -la ../*.apk
 
@@ -92,7 +108,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SILVIA-BC-apk
+          name: SILVIA-BC-apk-${{ matrix.variant }}
           path: '*.apk'
 
       - name: Publish on Releases (version from package.json)
@@ -102,7 +118,7 @@ jobs:
         run: |
           V=$(node -p "const p=require('./package.json');p.release||p.version")
           T="v$V"
-          N="App Android di S.I.L.V.I.A. + B + C $V. Dal telefono scarica il file .apk e aprilo per installarlo (consenti l'installazione da questa origine). Salva progetto, PDF e XLS si aprono con il menu Condividi di Android."
+          N="App Android di S.I.L.V.I.A. + B + C $V. Dal telefono scarica il file .apk e aprilo per installarlo (consenti l'installazione da questa origine). SILVIA-BC_${V}_BETA.apk è la versione beta (lettura degli schemi PDF, limitare l'uso): si installa accanto all'app normale. Salva progetto, PDF e XLS si aprono con il menu Condividi di Android."
           if gh release view "$T" >/dev/null 2>&1; then
             gh release upload "$T" *.apk --clobber
             case "$V" in *-rc*|*-beta*) ;; *) gh release edit "$T" --prerelease=false --latest ;; esac
