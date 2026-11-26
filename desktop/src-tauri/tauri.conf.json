@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "SILVIA B+C",
+  "version": "4.0.4",
+  "identifier": "io.github.tonypetris.silviabc.desktop",
+  "build": { "frontendDist": "../www" },
+  "app": {
+    "windows": [
+      {
+        "title": "S.I.L.V.I.A. + B + C",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 900,
+        "minHeight": 600,
+        "maximized": true,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    "publisher": "Antonio Petris",
+    "copyright": "© 2026 Antonio Petris",
+    "category": "Utility",
+    "shortDescription": "Selettività, back-up e coordinamento Hager",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper" },
+      "nsis": { "languages": ["Italian", "English"], "displayLanguageSelector": false, "installMode": "currentUser" }
+    }
+  }
+}
