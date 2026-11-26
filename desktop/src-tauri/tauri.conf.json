@@ -3,7 +3,7 @@
   "productName": "SILVIA B+C",
   "version": "4.0.4",
   "identifier": "io.github.tonypetris.silviabc.desktop",
-  "build": { "frontendDist": "../www" },
+  "build": { "frontendDist": "../app" },
   "app": {
     "windows": [
       {
